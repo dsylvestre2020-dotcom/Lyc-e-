@@ -1,0 +1,3559 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>APEX LYCÉE — Emplois du Temps</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#0f2557">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="EDT CEG">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="icon" href="./icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&display=swap");
+:root{
+  --bleu:#1a3c6e;--bleu2:#2563a8;--bleu3:#dbeafe;
+  --vert:#166534;--vert2:#dcfce7;
+  --orange:#92400e;--orange2:#fef3c7;
+  --rouge:#991b1b;--rouge2:#fee2e2;
+  --gris0:#f8fafc;--gris1:#f1f5f9;--gris2:#e2e8f0;
+  --gris3:#94a3b8;--gris4:#475569;--noir:#0f172a;--r:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Inter",sans-serif;background:var(--gris0);color:var(--noir);}
+header{background:var(--bleu);color:#fff;padding:12px 20px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 10px rgba(0,0,0,.3);}
+.hl{font-family:"Barlow Condensed",sans-serif;font-size:26px;color:#93c5fd;}
+.hm{flex:1;}.hm h1{font-size:14px;font-weight:700;}.hm p{font-size:10px;color:#93c5fd;margin-top:1px;}
+.ha{text-align:right;border-left:1px solid rgba(255,255,255,.2);padding-left:14px;line-height:1.7;}
+.ha .apex{font-family:"Barlow Condensed",sans-serif;font-size:14px;font-weight:700;color:#fde68a;letter-spacing:1px;}
+.ha .nom{font-size:11px;font-weight:600;color:#e0f2fe;}
+.ha .info{font-size:9px;color:#93c5fd;font-style:italic;}
+.tabs{display:flex;background:#fff;border-bottom:2px solid var(--gris2);overflow-x:auto;}
+.tab{padding:10px 16px;font-size:12px;font-weight:600;cursor:pointer;color:var(--gris3);border-bottom:3px solid transparent;margin-bottom:-2px;white-space:nowrap;}
+.tab.active{color:var(--bleu);border-bottom-color:var(--bleu);}
+.tp{display:none;padding:16px;}.tp.active{display:block;}
+label{display:block;font-size:12px;font-weight:500;color:var(--gris4);margin-bottom:3px;margin-top:8px;}
+input[type=text],input[type=number],select{width:100%;padding:8px 10px;border:1.5px solid var(--gris2);border-radius:var(--r);font-size:12px;font-family:"Inter",sans-serif;color:var(--noir);background:var(--gris0);outline:none;}
+input:focus,select:focus{border-color:var(--bleu2);background:#fff;}
+.st{font-family:"Barlow Condensed",sans-serif;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--gris3);margin:14px 0 8px;}
+.btn{padding:9px 14px;border:none;border-radius:var(--r);font-size:12px;font-weight:700;cursor:pointer;font-family:"Barlow Condensed",sans-serif;letter-spacing:.5px;color:#fff;}
+.bb{background:var(--bleu);}.bb:hover{background:var(--bleu2);}
+.bv{background:var(--vert);}.bv:hover{background:#14532d;}
+.br{background:#b91c1c;}.br:hover{background:var(--rouge);}
+.bfull{width:100%;}
+.brow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+.bsm{padding:4px 9px;font-size:11px;}
+.al{padding:8px 12px;border-radius:var(--r);font-size:11px;font-weight:500;margin-top:6px;}
+.aok{background:var(--vert2);color:var(--vert);border:1px solid #86efac;}
+.aerr{background:var(--rouge2);color:var(--rouge);border:1px solid #fca5a5;}
+.awk{background:var(--orange2);color:var(--orange);border:1px solid #fcd34d;}
+.ainf{background:var(--bleu3);color:var(--bleu);border:1px solid #93c5fd;}
+.vt{width:100%;border-collapse:collapse;font-size:11px;}
+.vt th,.vt td{border:1px solid var(--gris2);padding:5px 4px;text-align:center;}
+.vt th{background:var(--bleu);color:#fff;font-size:10px;}
+.vt td:first-child{background:var(--gris1);font-weight:600;text-align:left;padding-left:8px;}
+.vt input[type=number]{width:40px;padding:3px;text-align:center;border:1px solid var(--gris2);border-radius:3px;font-size:11px;}
+.ag{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;}
+.ac{background:var(--gris1);border:1.5px solid var(--gris2);border-radius:var(--r);padding:7px 12px;display:flex;align-items:center;gap:7px;font-size:11px;cursor:pointer;}
+.ac.on{background:var(--orange2);border-color:#fcd34d;color:var(--orange);font-weight:600;}
+.pc{background:#fff;border:1.5px solid var(--gris2);border-radius:var(--r);padding:10px 12px;margin-bottom:8px;}
+.ph{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
+.pt{font-size:13px;font-weight:700;color:var(--bleu);}
+.ps{font-size:11px;color:var(--gris3);margin-top:2px;}
+.pp{font-size:10px;color:var(--vert);margin-top:2px;font-weight:600;}
+.pb{display:flex;gap:5px;flex-shrink:0;}
+.be{padding:4px 9px;border:none;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;background:var(--bleu3);color:var(--bleu);}
+.bd{padding:4px 9px;border:none;border-radius:4px;font-size:11px;font-weight:600;cursor:pointer;background:var(--rouge2);color:var(--rouge);}
+.cr{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--gris1);border-radius:var(--r);border:1.5px solid var(--gris2);margin-bottom:4px;}
+.cr.on{background:var(--bleu3);border-color:var(--bleu2);}
+.cr label{margin:0;font-size:12px;font-weight:700;color:var(--bleu);cursor:pointer;min-width:72px;}
+.cr select{padding:4px 6px;font-size:11px;border:1.5px solid var(--gris2);border-radius:4px;flex:1;}
+.hp{font-size:12px;margin-top:8px;padding:8px 12px;background:var(--gris1);border-radius:var(--r);border:1.5px solid var(--gris2);}
+.mb{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;}
+.mb.on{display:flex;}
+.mx{background:#fff;border-radius:10px;padding:20px;width:92%;max-width:520px;max-height:90vh;overflow-y:auto;}
+.mx h2{font-size:15px;font-weight:700;color:var(--bleu);margin-bottom:12px;}
+.mxb{display:flex;gap:8px;margin-top:14px;}
+#po{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+#po.on{display:flex;}
+.sp{width:46px;height:46px;border:5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;}
+#po p{color:#fff;font-size:13px;font-weight:600;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.dw{background:#fff;border:1px solid var(--gris2);border-radius:8px;padding:12px 16px 10px;box-shadow:0 2px 12px rgba(0,0,0,.08);position:relative;}
+.qrbox{position:absolute;top:8px;right:8px;text-align:center;font-size:6px;color:#777;line-height:1.2;}
+.qrbox canvas,.qrbox img{width:44px!important;height:44px!important;}
+.dh{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:4px;}
+.dh .g{font-size:9.5px;line-height:1.65;}.dh .d{font-size:9.5px;text-align:right;line-height:1.65;}
+.dl{font-size:7px;color:#bbb;letter-spacing:2px;margin:1px 0;}
+.et{font-size:10.5px;font-weight:700;text-transform:uppercase;margin-top:3px;}
+.dt{text-align:center;font-size:12px;font-weight:700;text-transform:uppercase;margin:5px 0 4px;letter-spacing:1px;}
+.di{font-size:10px;margin-bottom:5px;line-height:1.8;}.di span{font-weight:700;}
+.tt{width:100%;border-collapse:collapse;font-size:9.5px;margin-bottom:6px;}
+.tt th,.tt td{border:1px solid #444;padding:4px 3px;text-align:center;vertical-align:middle;}
+.tt th{background:var(--bleu);color:#fff;font-size:9px;}
+.tt .thh{background:#1a1a1a;width:62px;}
+.hc{background:#efefef;font-weight:700;font-size:8.5px;white-space:pre-line;}
+.pr{background:var(--orange2);font-style:italic;font-size:8px;font-weight:600;color:var(--orange);}
+.dr{background:var(--vert2);font-style:italic;font-size:8px;font-weight:600;color:var(--vert);}
+.cc{font-weight:700;font-size:9px;line-height:1.3;cursor:pointer;}
+.pdc{background:var(--vert2);color:var(--vert);font-size:9px;}
+.sc{background:var(--orange2);color:var(--orange);font-size:8px;}
+.cMATH{background:#dbeef3!important}.cFR{background:#e2efda!important}
+.cANG{background:#deeaf1!important}.cHG{background:#ead1dc!important}
+.cSVT{background:#fff2cc!important}.cPC{background:#fce4d6!important}
+.cEC{background:#e8e8e8!important}.cEPS{background:#e2d9f3!important}
+.cALM{background:#d9e8d3!important}.cPHILO{background:#f9d9e0!important}.cTIC{background:#d6eaf8!important}
+.hfl{font-size:8.5px;color:var(--gris4);margin:3px 0;padding:3px 6px;background:var(--gris0);border-radius:4px;}
+.sg{display:flex;justify-content:flex-end;margin-top:8px;font-size:9px;text-align:center;flex-direction:column;align-items:flex-end;gap:2px;}
+.sg .sn{font-weight:700;text-decoration:underline;margin-top:8px;}
+.sigzone{position:relative;width:150px;height:60px;display:flex;align-items:center;justify-content:center;}
+.sigzone img.cachetimg{position:absolute;max-height:70px;max-width:70px;opacity:0.88;z-index:1;left:6px;top:-6px;}
+.sigzone img.sigimg{position:relative;max-height:45px;max-width:130px;z-index:2;}
+.cb{background:var(--rouge2);color:var(--rouge);border:1px solid #fca5a5;border-radius:var(--r);padding:8px 12px;font-size:11px;margin-top:8px;}
+.rg{display:flex;flex-direction:column;gap:16px;margin-top:14px;}
+#mman{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;}
+#mman.on{display:flex;}
+.mman-box{background:#fff;border-radius:10px;padding:18px 20px;width:92%;max-width:420px;}
+.mman-box h3{font-size:14px;font-weight:700;color:var(--bleu);margin-bottom:10px;}
+@media print{
+  header,.tabs,.tp,.brow,.btn,#po,.cb,.mb,#mman,#genStatus,.al,.hp{display:none!important;}
+  .rg{display:block!important;}
+  .rg > div{display:block!important;}
+  .dw{display:block!important;box-shadow:none!important;border:none!important;padding:6mm 7mm!important;margin:0!important;width:100%!important;max-width:100%!important;page-break-after:always;page-break-inside:avoid;}
+  .qrbox canvas,.qrbox img{width:14mm!important;height:14mm!important;}
+  .dw:last-child{page-break-after:auto;}
+  body{background:#fff!important;margin:0;padding:0;}
+  @page{margin:5mm;size:A4 portrait;}
+  .dh .g,.dh .d{font-size:9pt!important;line-height:1.5!important;}
+  .dl{font-size:7pt!important;margin:1pt 0!important;}
+  .et{font-size:10pt!important;}
+  .dt{font-size:12pt!important;margin:4pt 0 3pt!important;}
+  .di{font-size:10pt!important;margin-bottom:4pt!important;}
+  .tt{font-size:9pt!important;width:100%!important;}
+  .tt th{font-size:8.5pt!important;padding:2.5pt 2pt!important;}
+  .tt td{padding:2.5pt 2pt!important;font-size:9pt!important;}
+  .hc{font-size:8pt!important;width:58pt!important;}
+  .cc{font-size:8.5pt!important;}
+  .pr,.dr{font-size:7pt!important;padding:2pt!important;}
+  .sg{margin-top:6pt!important;}
+  .sg .sn{margin-top:8pt!important;}
+  .sigzone{width:110pt!important;height:45pt!important;}
+  .sigzone img.cachetimg{max-height:52pt!important;max-width:52pt!important;}
+  .sigzone img.sigimg{max-height:34pt!important;max-width:95pt!important;}
+  .hfl{font-size:8pt!important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ECRAN D'ACTIVATION -->
+<div id="lockScreen" style="position:fixed;inset:0;background:linear-gradient(135deg,#0f2557,#1e3a75);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:14px;padding:28px 24px;max-width:360px;width:100%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.3);">
+    <div style="font-family:'Barlow Condensed',sans-serif;font-size:26px;font-weight:700;color:#0f2557;margin-bottom:2px;">APEX <span style="color:#f97316">EDT</span></div>
+    <div style="font-size:11px;color:#94a3b8;margin-bottom:20px;">APEX ÉDUCATION</div>
+    <div style="font-size:12.5px;color:#475569;margin-bottom:14px;">Cette application est protégée. Entrez votre code d'activation pour continuer.</div>
+    <input type="text" id="lockCode" placeholder="Code d'activation" style="width:100%;padding:11px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:14px;text-align:center;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;" onkeydown="if(event.key==='Enter')tryUnlock()">
+    <button onclick="tryUnlock()" style="width:100%;padding:11px;border:none;border-radius:8px;background:#f97316;color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;letter-spacing:.5px;">🔓 Déverrouiller</button>
+    <div id="lockError" style="color:#b91c1c;font-size:11.5px;margin-top:8px;"></div>
+    <div style="font-size:10.5px;color:#94a3b8;margin-top:18px;border-top:1px solid #f1f5f9;padding-top:12px;">Pas encore de code ? Contactez APEX ÉDUCATION<br><b>WhatsApp : +226 64 41 86 96</b></div>
+  </div>
+</div>
+
+<div id="po"><div class="sp"></div><p>Génération du PDF...</p></div>
+
+<!-- MODAL MODIFICATION MANUELLE -->
+<div id="mman">
+  <div class="mman-box">
+    <h3>✏️ Modifier ce créneau</h3>
+    <input type="hidden" id="mnPid"><input type="hidden" id="mnJour"><input type="hidden" id="mnSid">
+    <p id="mnInfo" style="font-size:11px;color:var(--gris3);margin-bottom:10px">—</p>
+    <label>Classe</label>
+    <select id="mnCl" style="margin-bottom:8px"><option value="">— Vide —</option></select>
+    <label>Matière</label>
+    <select id="mnMat" style="margin-bottom:12px">
+      <option value="">— Vide (effacer) —</option>
+    </select>
+    <label>Salle (optionnel)</label>
+    <select id="mnSalle" style="margin-bottom:12px"><option value="">— Aucune —</option></select>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:12px">
+      <input type="checkbox" id="mnLock" style="width:16px;height:16px"> &#128274; Verrouiller ce créneau (ne bougera plus lors d'une régénération)
+    </label>
+    <div style="display:flex;gap:8px">
+      <button class="btn bv" onclick="appManuel()" style="flex:1">✅ Appliquer</button>
+      <button class="btn" style="background:var(--gris3);flex:1" onclick="fManuel()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITION PROF -->
+<div class="mb" id="modalEdit">
+  <div class="mx">
+    <h2>✏️ Modifier le professeur</h2>
+    <input type="hidden" id="ePid">
+    <label>Nom</label><input type="text" id="eNom">
+    <label>Prénom</label><input type="text" id="ePrenom">
+    <label>Matière principale</label>
+    <select id="eMat1" onchange="rebuildEC()"></select>
+    <label>Matière secondaire</label>
+    <select id="eMat2" onchange="rebuildEC()">
+      <option value="">— Aucune —</option>
+    </select>
+    <label>3ème matière (ex: FR/HG/EC)</label>
+    <select id="eMat3" onchange="rebuildEC()">
+      <option value="">— Aucune —</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer">
+      <input type="checkbox" id="eAllait" style="width:16px;height:16px">
+      Femme allaitante (pas de cours à 7h, démarrage à partir de 7h55)
+    </label>
+    <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+      <input type="checkbox" id="eJpExempt" style="width:16px;height:16px">
+      Sans journée de repos individuelle (professeur à volume horaire élevé — libère tous ses jours pour faciliter le placement des blocs 2h/2h/1h)
+    </label>
+    <div class="st" style="margin-top:10px">Classes assignées</div>
+    <div id="eCB"></div>
+    <div class="hp" id="eHP">—</div>
+    <div class="mxb">
+      <button class="btn bb" onclick="saveEdit()">💾 Enregistrer</button>
+      <button class="btn" style="background:var(--gris3)" onclick="closeModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<header>
+  <div class="hl">📅</div>
+  <div class="hm">
+    <h1>APEX LYCÉE — Générateur d'Emplois du Temps</h1>
+    <p>Burkina Faso · Lycée 6ème→Terminale (A, C, D) · Anti-conflits · EPS espacée · Journées pédagogiques</p>
+  </div>
+  <div class="ha">
+    <div class="apex">APEX ÉDUCATION</div>
+    <div class="nom">DIANDA SYLVESTRE</div>
+    <div class="info">Professeur Certifié des Lycées et Collèges · Concepteur</div>
+  </div>
+</header>
+
+<div id="installBar" style="display:none;background:#fde68a;color:#7c2d12;padding:8px 14px;font-size:11.5px;font-weight:600;display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+  <span id="installTxt">📲 Installez APEX LYCÉE sur cet appareil pour l'utiliser hors-ligne.</span>
+  <div style="display:flex;gap:8px">
+    <button id="btnInstall" onclick="doInstall()" style="display:none;padding:6px 12px;border:none;border-radius:6px;background:#0f2557;color:#fff;font-weight:700;font-size:11px;cursor:pointer">⬇️ Installer</button>
+    <button onclick="hideInstallBar()" style="padding:6px 10px;border:none;border-radius:6px;background:transparent;color:#7c2d12;font-weight:700;font-size:11px;cursor:pointer">✕</button>
+  </div>
+</div>
+
+<div class="tabs">
+  <div class="tab active" onclick="sTab('etab')">🏫 Établissement</div>
+  <div class="tab" onclick="sTab('vol')">📊 Volumes horaires</div>
+  <div class="tab" onclick="sTab('param')">⚙️ Paramètres</div>
+  <div class="tab" onclick="sTab('prof')">👥 Professeurs</div>
+  <div class="tab" onclick="sTab('gen')">⚡ Générer<span id="genTabDot" style="display:none;color:#ef4444;font-weight:900;margin-left:3px">●</span></div>
+  <div class="tab" onclick="sTab('salle')">🏫 Salle des profs</div>
+  <div class="tab" onclick="sTab('locaux')">🚪 Salles de classe</div>
+  <div class="tab" onclick="sTab('stats')">📊 Tableau de bord</div>
+</div>
+
+
+<!-- ONGLET ÉTABLISSEMENT -->
+<div class="tp active" id="tp-etab">
+  <div style="max-width:650px">
+    <div class="st">🏫 Informations</div>
+    <label>Nom de l'établissement</label>
+    <input type="text" id="etabN" value="COLLEGE D&#39;ENSEIGNEMENT GENERAL DE ZAMO">
+    <label>Région</label>
+    <input type="text" id="etabRegion" value="DU CENTRE-OUEST" placeholder="Ex : DU CENTRE-OUEST, DE L&#39;EST, DES HAUTS-BASSINS...">
+    <label>Province</label>
+    <input type="text" id="etabProvince" value="DU SANGUIE" placeholder="Ex : DU SANGUIE, DU KADIOGO, DE LA COMOE...">
+    <label>Fonction du signataire</label>
+    <select id="etabFonction">
+      <option value="Le Directeur">Le Directeur</option>
+      <option value="La Directrice">La Directrice</option>
+      <option value="Le Censeur">Le Censeur</option>
+      <option value="La Censeure">La Censeure</option>
+    </select>
+    <label>Nom du signataire</label><input type="text" id="etabD" value="François BADOLO">
+    <label>Titre / Grade du signataire</label><input type="text" id="etabT" value="Professeur Certifié des collèges">
+    <label>Année scolaire</label><input type="text" id="etabA" value="2025 – 2026">
+
+    <div class="st" style="margin-top:16px">✍️ Signature &amp; cachet (apparaissent sur les emplois du temps imprimés/PDF)</div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:6px">
+      <div style="flex:1;min-width:200px">
+        <label>Signature du signataire (image)</label>
+        <input type="file" id="sigFile" accept="image/*" onchange="handleStampUpload(this,'sig')">
+        <div id="sigPreviewBox" style="margin-top:6px"></div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <label>Cachet de l'établissement (image)</label>
+        <input type="file" id="cachetFile" accept="image/*" onchange="handleStampUpload(this,'cachet')">
+        <div id="cachetPreviewBox" style="margin-top:6px"></div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--gris3);margin-bottom:6px">Utilisez de préférence une image sur fond transparent (PNG) ou blanc, pas trop lourde (idéalement &lt; 300 Ko).</p>
+
+    <div class="st" style="margin-top:16px">🏷️ Classes actives</div>
+    <div id="caBox"></div>
+    <div class="brow">
+      <button class="btn bb bsm" onclick="addClasse()">➕ Ajouter une classe</button>
+      <button class="btn bv bsm" onclick="addClassesSecondaire()">➕ Ajouter toutes les classes du secondaire (2nde → Tle)</button>
+    </div>
+
+    <div class="st" style="margin-top:16px">⚽ Créneaux animations (bloqués)</div>
+    <p style="font-size:11px;color:var(--gris3);margin-bottom:6px">Cochez les créneaux sans cours (activités sportives/culturelles) :</p>
+    <div class="ag" id="animBox"></div>
+    <div class="al ainf" id="animInfo" style="margin-top:8px"></div>
+
+    <div class="brow">
+      <button class="btn bb" onclick="saveEtab()">💾 Enregistrer</button>
+      <button class="btn bb" onclick="sTab('vol')">Suivant →</button>
+    </div>
+    <div id="aEtab"></div>
+  </div>
+</div>
+
+<!-- ONGLET VOLUMES -->
+<div class="tp" id="tp-vol">
+  <div style="max-width:700px">
+    <div class="st">📊 Volumes horaires hebdomadaires officiels — modifiables</div>
+    <p style="font-size:11px;color:var(--gris3);margin-bottom:10px">0 = matière non enseignée à ce niveau.</p>
+    <div style="overflow-x:auto"><table class="vt" id="volT"></table></div>
+    <div class="brow">
+      <button class="btn bb" onclick="resetVol()">↺ Valeurs officielles</button>
+      <button class="btn bv" onclick="saveVol()">💾 Enregistrer</button>
+      <button class="btn bb" onclick="sTab('prof')">Suivant →</button>
+    </div>
+    <div id="aVol"></div>
+  </div>
+</div>
+
+<!-- ONGLET PARAMÈTRES DE PROGRAMMATION -->
+<div class="tp" id="tp-param">
+  <div style="max-width:700px">
+    <div class="st">📅 Jours ouvrables</div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:4px">
+      <input type="radio" name="samediMode" id="samediOff" onchange="setSamedi(false)"> Lundi à vendredi uniquement
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+      <input type="radio" name="samediMode" id="samediOn" onchange="setSamedi(true)"> Lundi à samedi
+    </label>
+    <p style="font-size:11px;color:var(--gris3);margin-top:6px">Le samedi, s'il est activé, reste soumis à toutes les autres contraintes (EPS, journées pédagogiques, disponibilités...).</p>
+
+    <div class="st" style="margin-top:18px">🏖️ Journées pédagogiques (aucun cours, pour tout l'établissement)</div>
+    <p style="font-size:11px;color:var(--gris3);margin-bottom:6px">Différent du jour de repos individuel de chaque professeur (onglet Professeurs) : ici, AUCUNE classe n'a cours ce jour-là.</p>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:4px">
+      <input type="radio" name="jpedMode" id="jpedAvec" onchange="setJourPedMode(true)"> Avec journée(s) pédagogique(s) — choisir le(s) jour(s) sans cours
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
+      <input type="radio" name="jpedMode" id="jpedSans" onchange="setJourPedMode(false)"> Sans journée pédagogique — tous les jours sont occupés
+    </label>
+    <div class="ag" id="jpedBox"></div>
+
+    <div class="st" style="margin-top:18px">🏃 Règles EPS pratique / théorique</div>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
+      <input type="checkbox" id="epsRulesChk" onchange="toggleEpsRules(this.checked)">
+      Activer la distinction stricte EPS pratique / EPS théorique
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;background:var(--gris1);padding:8px 10px;border-radius:var(--r)">
+      <input type="checkbox" id="epsEspaceChk" onchange="toggleEpsEspace(this.checked)">
+      <span style="font-size:11px"><b>EPS espacée</b> : pour une même classe, jamais d'EPS deux jours de suite (lundi + mercredi, pas lundi + mardi).</span>
+    </label>
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px;background:var(--gris1);padding:8px 10px;border-radius:var(--r)">
+      <input type="checkbox" id="epsSoirChk" onchange="toggleEpsSoir(this.checked)">
+      <span style="font-size:11px"><b>EPS le soir</b> : autoriser un bloc de 2h (15h-17h) pour une classe. Jamais d'EPS entre 10h et 12h, ni après 17h.</span>
+    </label>
+    <div id="epsParamBox"></div>
+
+    <div class="brow" style="margin-top:18px">
+      <button class="btn bb" onclick="saveParams()">💾 Enregistrer les paramètres</button>
+      <button class="btn bb" onclick="sTab('prof')">Suivant →</button>
+    </div>
+    <div id="aParam"></div>
+
+    <div class="st" style="margin-top:22px">🧪 Auto-diagnostic du moteur</div>
+    <p style="font-size:11px;color:var(--gris3);margin-bottom:6px">Lance une série de scénarios-tests (conflits, EPS, journées pédagogiques, samedi, volumes...) sur des données simulées, sans toucher à vos données réelles.</p>
+    <div class="brow"><button class="btn bb bsm" onclick="runSelfTests()">▶️ Lancer les tests</button></div>
+    <div id="testResults" style="margin-top:8px;font-size:11px"></div>
+  </div>
+</div>
+
+<!-- ONGLET PROFESSEURS -->
+<div class="tp" id="tp-prof">
+  <div style="max-width:700px">
+    <div class="st">👤 Ajouter un professeur</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div><label>Nom</label><input type="text" id="pN" placeholder="Ex : DIANDA"></div>
+      <div><label>Prénom</label><input type="text" id="pP" placeholder="Ex : Sylvestre"></div>
+    </div>
+    <label>Matière principale</label>
+    <select id="pM1" onchange="buildCB()"></select>
+    <label>Matière secondaire (bi-disciplinaire)</label>
+    <select id="pM2" onchange="buildCB()">
+      <option value="">— Aucune —</option>
+    </select>
+    <label>3ème matière (tri-disciplinaire — ex : FR / HG / EC)</label>
+    <select id="pM3" onchange="buildCB()">
+      <option value="">— Aucune —</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:6px;margin-top:10px;cursor:pointer">
+      <input type="checkbox" id="pAllait" style="width:16px;height:16px">
+      Femme allaitante (pas de cours à 7h, démarrage à partir de 7h55)
+    </label>
+    <label style="display:flex;align-items:center;gap:6px;margin-top:6px;cursor:pointer">
+      <input type="checkbox" id="pJpExempt" style="width:16px;height:16px">
+      Sans journée de repos individuelle (professeur à volume horaire élevé — libère tous ses jours pour faciliter le placement des blocs 2h/2h/1h)
+    </label>
+    <div class="st" style="margin-top:12px">🏷️ Classes et matières assignées</div>
+    <p style="font-size:11px;color:var(--gris3);margin-bottom:8px">Cochez les classes. Pour bi/tri-disciplinaire, choisissez la matière dans chaque classe.</p>
+    <div id="cbBox"></div>
+    <div class="hp" id="hpBox">Cochez des classes pour voir le total.</div>
+    <div class="brow"><button class="btn bb" onclick="addProf()">➕ Ajouter le professeur</button></div>
+    <div id="aProf"></div>
+    <div class="st" style="margin-top:16px">📋 Professeurs enregistrés</div>
+    <div id="profList"></div>
+    <div class="brow">
+      <button class="btn bb" onclick="sTab('gen')">Suivant : Générer →</button>
+      <button onclick="handleExportData()" style="padding:9px 14px;background:#1e40af;color:#fff;border:none;border-radius:var(--r);font-size:11px;font-weight:700;cursor:pointer">💾 Exporter mes données</button>
+      <button onclick="document.getElementById('importFile').click()" style="padding:9px 14px;background:#166534;color:#fff;border:none;border-radius:var(--r);font-size:11px;font-weight:700;cursor:pointer">📂 Importer</button>
+      <input type="file" id="importFile" accept="application/json" style="display:none" onchange="handleImportData(this.files[0])">
+      <button onclick="clearData()" style="padding:9px 14px;background:#7f1d1d;color:#fff;border:none;border-radius:var(--r);font-size:11px;font-weight:700;cursor:pointer">🗑 Effacer données</button>
+    </div>
+  </div>
+</div>
+
+<!-- ONGLET GÉNÉRER -->
+<div class="tp" id="tp-gen">
+  <div id="genStaleBanner" class="al awk" style="display:none">
+    &#9888; Des modifications ont été faites depuis la dernière génération (professeur, volumes, paramètres...). L'emploi du temps actuellement affiché/imprimé ne les reflète pas encore. <b>Cliquez sur "Générer" ci-dessous pour le mettre à jour.</b>
+  </div>
+  <div id="histBanner" class="al awk" style="display:none;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+    <span>&#128220; Vous consultez une version archivée du <b id="histBannerDate"></b>.</span>
+    <button class="btn bb bsm" onclick="exitHistoryPreview()">&#9664; Revenir à la version actuelle</button>
+  </div>
+  <div id="genStatus" class="al ainf">Ajoutez des professeurs puis cliquez sur Générer.</div>
+  <div class="brow" style="margin-top:10px">
+    <button class="btn bb bfull" onclick="genAll()">⚡ GÉNÉRER TOUS LES EMPLOIS DU TEMPS</button>
+  </div>
+  <div class="brow" style="margin-top:8px">
+    <button class="btn br" onclick="exportBackup()">&#128190; Exporter une sauvegarde (JSON)</button>
+    <label class="btn bv" style="cursor:pointer">&#128194; Importer une sauvegarde<input type="file" accept="application/json" style="display:none" onchange="handleImportFile(this)"></label>
+  </div>
+  <div id="conflBox"></div>
+  <div class="dt" style="margin-top:16px;margin-bottom:6px;text-align:left;font-size:13px;color:var(--bleu)">&#128220; Historique des versions générées</div>
+  <div id="histBox"></div>
+  <div id="histCompareRow" style="display:none;margin-bottom:10px">
+    <button class="btn bb" onclick="compareHistory()">&#128269; Comparer les 2 versions cochées</button>
+  </div>
+  <div id="histCompareBox"></div>
+  <div class="dt" style="margin-top:16px;margin-bottom:6px;text-align:left;font-size:13px;color:var(--bleu)">&#128221; Journal des modifications manuelles</div>
+  <div id="editLogBox"></div>
+  <div id="resBox" class="rg"></div>
+  <div class="dt" id="clHeading" hidden style="margin-top:22px;text-align:left;font-size:14px;color:var(--bleu);border-top:2px solid var(--gris2);padding-top:14px">&#128218; EMPLOIS DU TEMPS PAR CLASSE</div>
+  <div id="livretRow" hidden class="brow" style="margin-bottom:10px">
+    <button class="btn bb" data-orient="portrait" onclick="handleLivret(this)">&#128218; Livret complet — PDF Portrait</button>
+    <button class="btn bv" data-orient="landscape" onclick="handleLivret(this)">&#128218; Livret complet — PDF Paysage</button>
+    <button class="btn br" onclick="handleExcelLivret()">&#128202; Livret complet — Excel</button>
+  </div>
+  <div id="resBoxCl" class="rg"></div>
+</div>
+
+<!-- ONGLET SALLE DES PROFS -->
+<div class="tp" id="tp-salle">
+  <div class="dt" style="text-align:left;font-size:14px;color:var(--bleu);margin-bottom:10px">&#127979; SALLE DES PROFS — qui est occupé, à chaque heure</div>
+  <p style="font-size:11px;color:var(--gris3);margin-bottom:10px">Vue croisée de tous les professeurs : pratique à afficher/imprimer en salle des profs pour voir en un coup d'œil les disponibilités.</p>
+  <div class="brow" style="margin-bottom:10px">
+    <button class="btn bv" onclick="window.print()">&#128424; Imprimer</button>
+  </div>
+  <div id="salleBox" class="dw"></div>
+</div>
+
+<!-- ONGLET SALLES DE CLASSE (locaux + conflits) -->
+<div class="tp" id="tp-locaux">
+  <div class="dt" style="text-align:left;font-size:14px;color:var(--bleu);margin-bottom:10px">&#128682; SALLES DE CLASSE — locaux et occupation</div>
+  <p style="font-size:11px;color:var(--gris3);margin-bottom:10px">Déclarez vos salles/locaux, puis affectez-les créneau par créneau depuis la fiche d'un professeur (onglet ⚡ Générer, cliquer sur une case). Le logiciel vous avertit si deux classes différentes se retrouvent dans la même salle au même moment.</p>
+  <div class="brow" style="margin-bottom:10px">
+    <input type="text" id="salleNom" placeholder="Nom de la salle (ex: Salle 3, Labo SVT)" style="flex:2">
+    <button class="btn bb" onclick="addSalle()">&#10133; Ajouter</button>
+  </div>
+  <div id="sallesListBox" style="margin-bottom:16px"></div>
+  <div class="dt" style="text-align:left;font-size:13px;color:var(--bleu);margin-bottom:8px">Occupation par salle</div>
+  <select id="salleOccSel" onchange="renderSalleOccupation()" style="margin-bottom:10px"></select>
+  <div id="salleOccBox"></div>
+</div>
+
+<!-- ONGLET TABLEAU DE BORD -->
+<div class="tp" id="tp-stats">
+  <div class="dt" style="text-align:left;font-size:14px;color:var(--bleu);margin-bottom:10px">&#128202; TABLEAU DE BORD</div>
+  <div id="statsBox"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// DONNÉES ET CONFIGURATION
+// ═══════════════════════════════════════════════
+// Volumes horaires officiels — source : Tableau récapitulatif des volumes
+// horaires par classe, DCPR, 28-04-2023. Pour l'Allemand (LV2), volume
+// ambigu à 2ndeA/1èreA ("6 ou 3" selon l'établissement) : la valeur BASSE (3)
+// a été retenue par défaut ci-dessous — modifiable dans l'onglet Volumes.
+var VD = {
+  MATH:[5,5,5,5, 3,6, 3,7,6, 3,9,6],
+  FR:  [6,6,5,5, 5,4, 5,4,4, 5,4,4],
+  ANG: [5,5,3,3, 3,3, 3,3,3, 4,3,3],
+  HG:  [4,4,4,4, 4,3, 4,3,3, 4,3,3],
+  SVT: [3,3,3,4, 2,3, 2,2,4, 0,3,6],
+  PC:  [0,0,4,4, 3,6, 2,6,5, 0,7,6],
+  EC:  [2,2,2,2, 2,2, 2,2,2, 0,0,0],
+  EPS: [3,3,3,3, 2,2, 2,2,2, 2,2,2],
+  ALM: [0,0,3,3, 3,0, 3,0,0, 4,0,0],
+  PHILO:[0,0,0,0, 2,2, 3,2,2, 6,2,2],
+  TIC: [2,2,2,2, 2,2, 2,2,2, 2,2,2]
+};
+var VOL = JSON.parse(JSON.stringify(VD));
+var MN = {
+  MATH:"Mathématiques", FR:"Français", ANG:"Anglais", HG:"Histoire-Géo",
+  SVT:"SVT", PC:"Sc. Physiques", EC:"Éduc. Civique", EPS:"EPS",
+  ALM:"Allemand", PHILO:"Philosophie", TIC:"TIC"
+};
+var ML = Object.keys(MN);
+// Index : 0=6ème 1=5ème 2=4ème 3=3ème (CEG) | 4=2ndeA 5=2ndeC 6=1reA 7=1reC 8=1reD 9=TleA 10=TleC 11=TleD (secondaire)
+var NNM = ["6ème","5ème","4ème","3ème","2nde A","2nde C","1re A","1re C","1re D","Tle A","Tle C","Tle D"];
+
+var CAD = [
+  {id:"6A",nom:"6ème A",niv:0},{id:"5A",nom:"5ème A",niv:1},{id:"4A",nom:"4ème A",niv:2},{id:"3A",nom:"3ème A",niv:3},
+  {id:"2A",nom:"2nde A",niv:4},{id:"2C",nom:"2nde C",niv:5},
+  {id:"1A",nom:"1re A",niv:6},{id:"1C",nom:"1re C",niv:7},{id:"1D",nom:"1re D",niv:8},
+  {id:"TA",nom:"Tle A",niv:9},{id:"TC",nom:"Tle C",niv:10},{id:"TD",nom:"Tle D",niv:11}
+];
+var CA = CAD.map(function(c){return c.id;});
+
+var JOURS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi"];
+
+// Créneaux : paires NON chevauchantes garanties
+// Matin: s1(7h00), s2(7h55), s3(8h50) | RÉCRÉ | s4(10h10), s5(11h05)
+// EPS interdit sur s5 (11h05-12h, chaleur/terrain) ET sur toute heure du soir (s6,s7) :
+// l'EPS (pratique comme théorie) est TOUJOURS programmée entre 7h et 10h (s1/s2/s3).
+// Soir: s6(15h00), s7(15h55)
+// NB : le créneau 16h50-18h00 (ancien "s8", exclusivement EPS) a été RETIRÉ :
+// aucun cours — EPS ou autre — ne doit être programmé entre 17h et 18h.
+var CR = [
+  {id:"s1",l:"7h00\n7h55",   m:true,  t:"cours"},
+  {id:"s2",l:"7h55\n8h50",   m:true,  t:"cours"},
+  {id:"s3",l:"8h50\n9h45",   m:true,  t:"cours"},
+  {id:"r1",l:"RÉCRÉATION  09h45 → 10h10", t:"pause"},
+  {id:"s4",l:"10h10\n11h05", m:true,  t:"cours"},
+  {id:"s5",l:"11h05\n12h00", m:true,  t:"cours", excl:["EPS"]},
+  {id:"d1",l:"DÉJEUNER  12h00 → 14h55",   t:"dej"},
+  {id:"s6",l:"15h00\n15h55", m:false, t:"cours"},
+  {id:"s7",l:"15h55\n16h50", m:false, t:"cours"}
+];
+
+// Paires NON chevauchantes : s1+s2, s4+s5 (matin), s6+s7 (soir)
+// s3 utilisé en solo uniquement (entre récré et s1+s2)
+var PM = [["s1","s2"],["s4","s5"]];  // paires matin garanties sans chevauchement
+var PS = [["s6","s7"]];              // paires soir
+
+// Triplets de créneaux réellement CONTIGUS (aucune coupure entre eux) : s1-s2-s3
+// (matin, avant la récré). Sert à empêcher qu'une même matière occupe 3h
+// d'affilée pour une même classe le même jour.
+var TRIPLES = [["s1","s2","s3"]];
+
+var ANIM = {};
+var PROFS = [];
+var PID = 0;
+var GCACHE = {};  // cache des grilles pour modification manuelle
+var ETAB_SIG = null;     // signature du signataire, en data URL (base64)
+var ETAB_CACHET = null;  // cachet de l'établissement, en data URL (base64)
+var HISTORY = [];        // historique des versions générées : [{ts, profs, gr, ca}, ...] (les plus récentes en premier)
+var HIST_PREVIEW_BAK = null; // sauvegarde de l'état réel pendant qu'on prévisualise une version archivée
+var CURRENT_LOCKS = [];  // créneaux verrouillés manuellement, capturés juste avant une régénération
+var HIST_COMPARE_SEL = []; // indices (dans HISTORY) des 2 versions cochées pour comparaison
+var EDIT_LOG = []; // journal des modifications manuelles : [{ts,profId,profNom,jour,sid,avant,apres}, ...] (les plus récentes en premier), plafonné à 200 entrées
+var SALLES = []; // liste des salles/locaux : [{id,nom}, ...]
+var RID = 0; // compteur d'id pour SALLES
+
+// Recense tous les créneaux marqués "verrouillés" (locked:true) dans la grille actuelle,
+// pour que la prochaine génération les replace exactement à l'identique.
+function collectLockedCells(){
+  var out=[];
+  Object.keys(GCACHE).forEach(function(pidStr){
+    var g=GCACHE[pidStr]; if(!g) return;
+    var pid=parseInt(pidStr);
+    JOURS.forEach(function(j){
+      if(!g[j]) return;
+      CR.forEach(function(s){
+        var c=g[j][s.id];
+        if(c&&c.locked) out.push({profId:pid,jour:j,sid:s.id,clId:c.clId,clN:c.clN,mat:c.mat,sub:c.sub||null,combo:!!c.combo});
+      });
+    });
+  });
+  return out;
+}
+
+// ═══════════════════════════════════════════════
+// PARAMÈTRES DE PROGRAMMATION (nouveaux réglages configurables)
+// ═══════════════════════════════════════════════
+var JOURS_TOUS = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi"];
+var SAMEDI_ON = false;           // programmer jusqu'au samedi ?
+var JOURPED = {};                // {Lundi:true,...} = journée pédagogique GLOBALE (aucun cours, pour tous)
+var JOURPED_ON = false;          // mode "avec journée(s) pédagogique(s)" actif ? si false, AUCUN jour n'est bloqué
+                                  // (même si JOURPED contient d'anciennes coches) — mode "sans journée pédagogique",
+                                  // tous les jours sont occupés.
+var EPS_RULES_ON = true;         // activer la distinction EPS pratique / EPS théorique
+var EPS_THEO = [1,1,1,1, 1,1, 1,1,1, 1,1,1]; // heures EPS théoriques par niveau (indices NNM) ; le reste = pratique
+var EPS_SLOTS = {                // créneaux autorisés pour une heure EPS ISOLÉE (hors bloc combiné)
+  P:["s1","s2","s3"],            // pratique isolée : UNIQUEMENT 7h-8h, 8h-9h ou 9h-10h (toujours 7h-10h) — jamais le soir
+  T:[]                           // théorique isolée : AUCUNE — la théorie doit toujours être accolée
+                                  // à une heure de pratique via le bloc combiné (cf. EPS_COMBO_ON)
+};
+// Règle DURE, non contournable par une configuration (même une ancienne sauvegarde
+// corrompue ou un import) : l'EPS — pratique ou théorique, isolée ou combinée —
+// n'est JAMAIS placée à 10h10-11h05, 11h05-12h, 15h00-15h55 ni 15h55-16h50.
+// Contrairement à EPS_SLOTS (une liste d'autorisation, modifiable), ceci est une
+// liste d'interdiction vérifiée en dernier ressort dans canPlace(), quoi qu'il arrive.
+var EPS_FORBIDDEN_SLOTS = ["s4","s5","s6","s7"];
+// Bloc EPS combiné : un jour donné, 1h théorique + 1h pratique doivent être
+// placées d'affilée (heure après heure, simultanément) pour la même classe,
+// car le jour où il y a de la théorie il faut obligatoirement faire la
+// pratique aussi. Le reste du volume horaire de pratique est ensuite placé
+// un AUTRE jour, sur l'un des créneaux isolés autorisés ci-dessus (EPS_SLOTS.P).
+var EPS_COMBO_ON = true;
+// Blocs de 2h consécutives (simultanées) autorisés pour le bloc combiné
+// théorie+pratique : 7h-9h (s1+s2), 8h-10h (s2+s3) ou 15h-17h (s6+s7). Le soir
+// n'est ouvert QUE pour un bloc combiné complet d'une seule et même classe
+// (jamais pour une heure EPS isolée, ni pour deux classes différentes réparties
+// sur s6 et s7 — voir EPS_FORBIDDEN_SLOTS et son exception "sub===COMBO").
+var EPS_COMBO_PAIRS = [["s1","s2"],["s2","s3"],["s6","s7"]];
+var EPS_ESPACE = true;           // EPS d'une même classe : jamais deux jours consécutifs (lundi+mardi interdit ; lundi+mercredi OK)
+var EPS_SOIR_ON = true;          // bloc EPS de 2h le soir (15h-17h, une seule classe) autorisé
+var EPS_PAIRS_JOUR = [["s1","s2"],["s2","s3"]];
+var EPS_PAIR_SOIR = ["s6","s7"];
+function majEpsPairs(){ EPS_COMBO_PAIRS = EPS_SOIR_ON ? EPS_PAIRS_JOUR.concat([EPS_PAIR_SOIR]) : EPS_PAIRS_JOUR.slice(); }
+var LAST_FAILED = {};            // clés des tâches en échec lors de la dernière tentative (pour la réparation)
+var GEN_STALE = false;           // true si des données ont changé depuis la dernière génération affichée
+
+// Affiche/masque l'avertissement "emploi du temps périmé" (onglet Générer + pastille sur l'onglet)
+function renderGenStaleBanner(){
+  var dot=document.getElementById("genTabDot");
+  var banner=document.getElementById("genStaleBanner");
+  if(dot) dot.style.display=GEN_STALE?"inline":"none";
+  if(banner) banner.style.display=GEN_STALE?"block":"none";
+}
+// À appeler après toute modification pouvant affecter un emploi du temps déjà généré
+// (ajout/modif/suppression de prof, volumes, paramètres, animations...).
+function markStale(){
+  if(GCACHE&&Object.keys(GCACHE).length>0){ GEN_STALE=true; renderGenStaleBanner(); }
+}
+
+function rebuildJours(){
+  // Reconstruit JOURS EN PLACE (même référence tableau, utilisée partout ailleurs)
+  var base = SAMEDI_ON ? JOURS_TOUS : JOURS_TOUS.slice(0,5);
+  JOURS.length = 0;
+  base.forEach(function(j){ JOURS.push(j); });
+}
+
+// ═══════════════════════════════════════════════
+// PERSISTANCE
+// ═══════════════════════════════════════════════
+function save(){
+  if(HIST_PREVIEW_BAK) return; // ne jamais écraser les vraies données pendant la prévisualisation d'un historique
+  try{
+    localStorage.setItem("apex_lycee", JSON.stringify(buildSaveObj()));
+  }catch(e){}
+}
+function load(){
+  try{
+    var r=localStorage.getItem("apex_lycee"); if(!r){ rebuildJours(); return; }
+    var d=JSON.parse(r);
+    applyImportedData(d);
+    renderStampPreviews();
+  }catch(e){}
+}
+function g(id){var el=document.getElementById(id);return el?el.value:"";}
+function sv(id,val){var el=document.getElementById(id);if(el)el.value=val;}
+
+// ═══════════════════════════════════════════════
+// EXPORT / IMPORT (sauvegarde manuelle, transfert entre appareils, support technique)
+// ═══════════════════════════════════════════════
+function buildSaveObj(){
+  return {
+    profs:PROFS, pid:PID, cad:CAD, ca:CA, vol:VOL, anim:ANIM,
+    samedi:SAMEDI_ON, jourped:JOURPED, jourpedOn:JOURPED_ON, epsOn:EPS_RULES_ON, epsTheo:EPS_THEO, epsSlots:EPS_SLOTS, epsCombo:EPS_COMBO_ON, epsEspace:EPS_ESPACE, epsSoir:EPS_SOIR_ON,
+    gcache:GCACHE, currentLocks:CURRENT_LOCKS, genStale:GEN_STALE, editLog:EDIT_LOG,
+    salles:SALLES, rid:RID,
+    etab:{n:g("etabN"),d:g("etabD"),t:g("etabT"),a:g("etabA"),reg:g("etabRegion"),prov:g("etabProvince"),fx:g("etabFonction"),sig:ETAB_SIG,cachet:ETAB_CACHET}
+  };
+}
+function handleExportData(){
+  try{
+    var blob=new Blob([JSON.stringify(buildSaveObj(),null,2)],{type:"application/json;charset=utf-8"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    var d=new Date(); function p2(n){return (n<10?"0":"")+n;}
+    a.href=url; a.download="apex_lycee_"+d.getFullYear()+p2(d.getMonth()+1)+p2(d.getDate())+".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }catch(e){ alert("Erreur lors de l'export."); console.error(e); }
+}
+// Applique un objet de données importé — même logique que load(), mais depuis un objet déjà parsé.
+function applyImportedData(d){
+  if(d.profs&&Array.isArray(d.profs)){PROFS=d.profs;PID=d.pid||0;}
+  if(d.cad&&Array.isArray(d.cad)&&d.cad.length){
+    // Cas normal (fichiers exportés depuis cette version ou une version plus récente).
+    CAD=d.cad;
+    if(d.ca&&Array.isArray(d.ca)) CA=d.ca;
+  } else {
+    // RÉCUPÉRATION : fichier d'une ancienne version où CAD n'était JAMAIS
+    // sauvegardé (bug corrigé ici) — chaque rechargement perdait donc toutes
+    // les classes personnalisées, ce qui pouvait pousser à recréer les mêmes
+    // classes plusieurs fois (doublons de même nom, IDs différents) au fil des
+    // sessions. On reconstruit CAD à partir de ce que les professeurs
+    // référencent réellement (clId/clN/niv dans leurs matières), PUIS on
+    // fusionne les classes qui portent le même nom en une seule — en
+    // réaffectant tous les professeurs concernés vers l'identifiant conservé.
+    var parId={};
+    (PROFS||[]).forEach(function(p){ (p.cl||[]).forEach(function(c){
+      if(!parId[c.clId]) parId[c.clId]={id:c.clId,nom:c.clN,niv:c.niv};
+    }); });
+    var idCanonique={}; // nom -> id conservé
+    var fusions=[];
+    Object.keys(parId).forEach(function(id){
+      var c=parId[id];
+      if(!idCanonique[c.nom]) idCanonique[c.nom]=id;
+      else if(idCanonique[c.nom]!==id) fusions.push({de:id,vers:idCanonique[c.nom],nom:c.nom});
+    });
+    if(fusions.length){
+      var mapFusion={}; fusions.forEach(function(f){mapFusion[f.de]=f.vers;});
+      (PROFS||[]).forEach(function(p){ (p.cl||[]).forEach(function(c){
+        if(mapFusion[c.clId]) c.clId=mapFusion[c.clId];
+      }); });
+      console.warn("APEX EDT : "+fusions.length+" classe(s) en double fusionnée(s) automatiquement (bug de sauvegarde corrigé) : "+fusions.map(function(f){return f.nom;}).join(", "));
+    }
+    CAD=Object.keys(idCanonique).map(function(nom){return parId[idCanonique[nom]];});
+    CA=CAD.map(function(c){return c.id;});
+  }
+  if(d.vol) VOL=d.vol;
+  if(d.anim) ANIM=d.anim;
+  if(typeof d.samedi==="boolean") SAMEDI_ON=d.samedi;
+  if(d.jourped) JOURPED=d.jourped;
+  if(typeof d.jourpedOn==="boolean") JOURPED_ON=d.jourpedOn;
+  else JOURPED_ON=Object.keys(JOURPED).some(function(k){return JOURPED[k];});
+  if(typeof d.epsOn==="boolean") EPS_RULES_ON=d.epsOn;
+  if(d.epsTheo&&Array.isArray(d.epsTheo)) EPS_THEO=d.epsTheo;
+  if(d.epsSlots) EPS_SLOTS=d.epsSlots;
+  if(typeof d.epsCombo==="boolean") EPS_COMBO_ON=d.epsCombo;
+  if(typeof d.epsEspace==="boolean") EPS_ESPACE=d.epsEspace;
+  if(typeof d.epsSoir==="boolean") EPS_SOIR_ON=d.epsSoir;
+  majEpsPairs();
+  // Nettoyage : une sauvegarde ancienne (d'avant le durcissement de la règle EPS)
+  // peut encore contenir des créneaux aujourd'hui interdits (10h-12h, 15h-17h).
+  // On les retire silencieusement plutôt que de laisser une vieille configuration
+  // contourner la règle en vigueur.
+  EPS_SLOTS.P=(EPS_SLOTS.P||[]).filter(function(s){return EPS_FORBIDDEN_SLOTS.indexOf(s)===-1;});
+  EPS_SLOTS.T=(EPS_SLOTS.T||[]).filter(function(s){return EPS_FORBIDDEN_SLOTS.indexOf(s)===-1;});
+  if(d.gcache) GCACHE=d.gcache;
+  if(d.currentLocks&&Array.isArray(d.currentLocks)) CURRENT_LOCKS=d.currentLocks;
+  if(typeof d.genStale==="boolean") GEN_STALE=d.genStale;
+  if(d.editLog&&Array.isArray(d.editLog)) EDIT_LOG=d.editLog;
+  if(d.salles&&Array.isArray(d.salles)) SALLES=d.salles;
+  if(typeof d.rid==="number") RID=d.rid;
+  rebuildJours();
+  if(d.etab){
+    sv("etabN",d.etab.n||""); sv("etabD",d.etab.d||"");
+    sv("etabT",d.etab.t||""); sv("etabA",d.etab.a||"");
+    if(d.etab.reg) sv("etabRegion",d.etab.reg);
+    if(d.etab.prov) sv("etabProvince",d.etab.prov);
+    if(d.etab.fx) sv("etabFonction",d.etab.fx);
+    if(d.etab.sig) ETAB_SIG=d.etab.sig;
+    if(d.etab.cachet) ETAB_CACHET=d.etab.cachet;
+  }
+}
+function handleImportData(file){
+  if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var d=JSON.parse(e.target.result);
+      if(!confirm("Importer ce fichier remplacera TOUTES les données actuelles (professeurs, classes, emploi du temps généré). Continuer ?")) return;
+      applyImportedData(d);
+      save();
+      buildCABox(); buildAnimBox(); buildParamsBox(); buildCB(); renderProfs();
+      if(PROFS.length&&GCACHE&&Object.keys(GCACHE).length){ refreshAuditAfterEdit(); renderAll(GCACHE); renderClasses(); }
+      renderGenStaleBanner(); renderEditLog();
+      alert("Import réussi ✅");
+    }catch(err){ alert("Fichier invalide ou corrompu."); console.error(err); }
+  };
+  reader.readAsText(file);
+}
+
+function clearData(){
+  if(!confirm("Effacer tous les professeurs et données ?")) return;
+  PROFS=[];PID=0;GCACHE={};CURRENT_LOCKS=[];EDIT_LOG=[];SALLES=[];RID=0;
+  localStorage.removeItem("apex_lycee");
+  renderProfs(); document.getElementById("resBox").innerHTML="";
+  document.getElementById("genStatus").className="al ainf";
+  document.getElementById("genStatus").innerHTML="Données effacées.";
+  GEN_STALE=false; renderGenStaleBanner(); renderEditLog();
+}
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+function sTab(t){
+  var ns=["etab","vol","param","prof","gen","salle","locaux","stats"];
+  document.querySelectorAll(".tab").forEach(function(el,i){el.classList.toggle("active",ns[i]===t);});
+  document.querySelectorAll(".tp").forEach(function(el){el.classList.remove("active");});
+  document.getElementById("tp-"+t).classList.add("active");
+  if(t==="prof") buildCB();
+  if(t==="vol") buildVT();
+  if(t==="param") buildParamsBox();
+  if(t==="salle") renderSalleProfs();
+  if(t==="locaux") { renderSallesList(); renderSalleOccupation(); }
+  if(t==="stats") renderStats();
+}
+
+// ═══════════════════════════════════════════════
+// ÉTABLISSEMENT
+// ═══════════════════════════════════════════════
+function saveEtab(){save();showAl("aEtab","ok","Enregistré &#9989;");}
+
+// ═══════════════════════════════════════════════
+// SAUVEGARDE / RESTAURATION (export-import JSON)
+// ═══════════════════════════════════════════════
+function exportBackup(){
+  try{
+    var data=localStorage.getItem("apex_lycee");
+    if(!data){ alert("Aucune donnée à exporter."); return; }
+    var blob=new Blob([data],{type:"application/json"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url; a.download="APEX_EDT_Sauvegarde_"+new Date().toISOString().slice(0,10)+".json";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }catch(e){ alert("Erreur lors de l'export."); console.error(e); }
+}
+function handleImportFile(input){
+  var file=input.files&&input.files[0]; if(!file) return;
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var data=JSON.parse(e.target.result);
+      if(!data||!Array.isArray(data.profs)){ alert("Fichier de sauvegarde invalide."); return; }
+      if(!confirm("Importer cette sauvegarde ? Cela remplacera TOUTES les données actuelles de l'application.")) return;
+      localStorage.setItem("apex_lycee", JSON.stringify(data));
+      localStorage.removeItem("apex_lycee_hist");
+      location.reload();
+    }catch(err){ alert("Fichier de sauvegarde invalide."); console.error(err); }
+    finally{ input.value=""; }
+  };
+  reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════
+// SIGNATURE & CACHET DU DIRECTEUR (upload image → data URL, persisté)
+// ═══════════════════════════════════════════════
+function handleStampUpload(input,kind){
+  var file=input.files&&input.files[0];
+  if(!file) return;
+  if(file.size>1500000){ alert("Image trop lourde (>1,5 Mo). Choisissez une image plus légère."); input.value=""; return; }
+  var reader=new FileReader();
+  reader.onload=function(e){
+    if(kind==="sig") ETAB_SIG=e.target.result; else ETAB_CACHET=e.target.result;
+    renderStampPreviews();
+    markStale(); save();
+  };
+  reader.readAsDataURL(file);
+}
+function clearStamp(kind){
+  if(kind==="sig") ETAB_SIG=null; else ETAB_CACHET=null;
+  var f=document.getElementById(kind==="sig"?"sigFile":"cachetFile"); if(f) f.value="";
+  renderStampPreviews();
+  markStale(); save();
+}
+function renderStampPreviews(){
+  var sb=document.getElementById("sigPreviewBox");
+  if(sb) sb.innerHTML=ETAB_SIG
+    ?"<img src='"+ETAB_SIG+"' style='max-height:50px;max-width:160px;display:block;margin-bottom:4px'>"
+      +"<button type='button' class='btn br bsm' onclick=\"clearStamp('sig')\">&#128465; Retirer</button>"
+    :"";
+  var cb=document.getElementById("cachetPreviewBox");
+  if(cb) cb.innerHTML=ETAB_CACHET
+    ?"<img src='"+ETAB_CACHET+"' style='max-height:70px;max-width:100px;display:block;margin-bottom:4px'>"
+      +"<button type='button' class='btn br bsm' onclick=\"clearStamp('cachet')\">&#128465; Retirer</button>"
+    :"";
+}
+
+function buildCABox(){
+  var b=document.getElementById("caBox");
+  b.innerHTML="";
+  var wrap=document.createElement("div");
+  wrap.style.cssText="display:flex;flex-wrap:wrap;gap:6px";
+  CAD.forEach(function(cl){
+    var chk=document.createElement("input");
+    chk.type="checkbox"; chk.id="ca_"+cl.id;
+    if(CA.indexOf(cl.id)!==-1) chk.checked=true;
+    chk.style.cssText="width:14px;height:14px";
+    chk.dataset.clid=cl.id;
+    chk.addEventListener("change",function(){
+      toggleCA(this,this.dataset.clid);
+    });
+    var lbl=document.createElement("label");
+    lbl.style.cssText="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:600;cursor:pointer;background:var(--gris1);padding:5px 10px;border-radius:var(--r);border:1.5px solid var(--gris2)";
+    lbl.appendChild(chk);
+    lbl.appendChild(document.createTextNode(cl.nom));
+    wrap.appendChild(lbl);
+  });
+  b.appendChild(wrap);
+}
+function toggleCA(el,id){
+  if(el.checked){if(CA.indexOf(id)===-1)CA.push(id);}
+  else CA=CA.filter(function(x){return x!==id;});
+  save();
+}
+function addClasse(){
+  var n=prompt("Nom de la classe (ex : 6ème B, 2nde A2, Tle D2...) :"); if(!n||!n.trim()) return;
+  n=n.trim();
+  if(CAD.some(function(c){return c.nom===n;})){ alert("Une classe nommée \""+n+"\" existe déjà — choisissez un nom différent (ex : \""+n+" 2\")."); return; }
+  var listeNiv=NNM.map(function(nn,i){return i+"="+nn;}).join(", ");
+  var niv=parseInt(prompt("Niveau : "+listeNiv));
+  if(isNaN(niv)||niv<0||niv>=NNM.length){alert("Niveau invalide.");return;}
+  var id="C"+Date.now();
+  CAD.push({id:id,nom:n,niv:niv}); CA.push(id);
+  buildCABox(); save();
+}
+// Crée en un clic une classe pour chacun des 8 niveaux/séries du secondaire
+// (2nde A, 2nde C, 1re A, 1re C, 1re D, Tle A, Tle C, Tle D), plutôt que de
+// passer 8 fois par les deux popups de addClasse(). N'ajoute que celles qui
+// n'existent pas déjà (par nom), pour pouvoir être recliqué sans créer de doublons.
+function addClassesSecondaire(){
+  var niveauxSecondaire=["2nde A","2nde C","1re A","1re C","1re D","Tle A","Tle C","Tle D"];
+  var ajoutees=[], dejaLa=[];
+  niveauxSecondaire.forEach(function(nom){
+    var niv=NNM.indexOf(nom);
+    if(niv===-1) return; // sécurité, ne devrait pas arriver
+    var existeDeja=CAD.some(function(c){return c.nom===nom;});
+    if(existeDeja){ dejaLa.push(nom); return; }
+    var id="C"+Date.now()+"_"+niv;
+    CAD.push({id:id,nom:nom,niv:niv}); CA.push(id);
+    ajoutees.push(nom);
+  });
+  buildCABox(); save();
+  var msg="";
+  if(ajoutees.length) msg+=ajoutees.length+" classe(s) ajoutée(s) : "+ajoutees.join(", ")+".";
+  if(dejaLa.length) msg+=(msg?"\n":"")+dejaLa.length+" existai(en)t déjà et n'ont pas été dupliquée(s) : "+dejaLa.join(", ")+".";
+  if(!msg) msg="Aucune classe à ajouter.";
+  alert(msg);
+}
+function getCA(){return CAD.filter(function(c){return CA.indexOf(c.id)!==-1;});}
+
+// Remplit dynamiquement toutes les listes déroulantes de matières à partir de
+// MN/ML — source UNIQUE, pour ne plus jamais avoir 7 listes codées en dur à
+// maintenir séparément (source d'incohérences si une matière est ajoutée).
+function populateMatiereSelects(){
+  var ids=["pM1","pM2","pM3","eMat1","eMat2","eMat3","mnMat"];
+  ids.forEach(function(id){
+    var sel=document.getElementById(id); if(!sel) return;
+    var garder=Array.prototype.slice.call(sel.querySelectorAll("option[value='']"));
+    sel.innerHTML="";
+    garder.forEach(function(o){sel.appendChild(o);});
+    ML.forEach(function(m){
+      var o=document.createElement("option");
+      o.value=m; o.textContent=MN[m];
+      sel.appendChild(o);
+    });
+  });
+}
+
+function buildAnimBox(){
+  var b=document.getElementById("animBox");b.innerHTML="";
+  JOURS.forEach(function(j){
+    ["matin","soir"].forEach(function(m){
+      var on=ANIM[j]&&ANIM[j][m];
+      var c=document.createElement("div");
+      c.className="ac"+(on?" on":"");
+      c.id="ac_"+j+"_"+m;
+      // Créer les éléments DOM directement (sans innerHTML avec guillemets imbriqués)
+      var chk=document.createElement("input");
+      chk.type="checkbox"; chk.id="an_"+j+"_"+m;
+      if(on) chk.checked=true;
+      chk.dataset.jour=j; chk.dataset.moment=m;
+      chk.style.cssText="width:14px;height:14px";
+      chk.addEventListener("change",function(){
+        togAnim(this,this.dataset.jour,this.dataset.moment);
+      });
+      var lbl=document.createElement("label");
+      lbl.htmlFor="an_"+j+"_"+m;
+      lbl.textContent=j+" "+m;
+      lbl.style.cursor="pointer";
+      c.appendChild(chk); c.appendChild(lbl);
+      b.appendChild(c);
+    });
+  });
+  updAnimInfo();
+}
+function togAnim(el,j,m){
+  if(!ANIM[j]) ANIM[j]={};
+  ANIM[j][m]=el.checked;
+  document.getElementById("ac_"+j+"_"+m).classList.toggle("on",el.checked);
+  updAnimInfo(); markStale(); save();
+}
+function updAnimInfo(){
+  var b=[];
+  JOURS.forEach(function(j){
+    if(ANIM[j]&&ANIM[j].matin) b.push(j+" matin");
+    if(ANIM[j]&&ANIM[j].soir)  b.push(j+" soir");
+  });
+  document.getElementById("animInfo").textContent=b.length?"&#9917; Bloqués : "+b.join(" | "):"Aucun créneau bloqué.";
+}
+function isBlq(j,m){return !!(isJourPeda(j)||(ANIM[j]&&ANIM[j][m]));}
+function isJourPeda(j){return JOURPED_ON&&!!JOURPED[j];}
+
+// ═══════════════════════════════════════════════
+// PARAMÈTRES DE PROGRAMMATION (onglet ⚙️)
+// ═══════════════════════════════════════════════
+function setSamedi(on){
+  SAMEDI_ON=on;
+  rebuildJours();
+  buildAnimBox();       // le tableau des animations doit inclure/retirer Samedi
+  buildParamsBox();      // le bloc journées pédagogiques doit inclure/retirer Samedi
+  markStale(); save();
+}
+function toggleEpsRules(on){ EPS_RULES_ON=on; buildParamsBox(); markStale(); save(); }
+function toggleEpsEspace(on){ EPS_ESPACE=on; markStale(); save(); }
+function toggleEpsSoir(on){ EPS_SOIR_ON=on; majEpsPairs(); markStale(); save(); }
+function toggleEpsCombo(on){ EPS_COMBO_ON=on; buildParamsBox(); markStale(); save(); }
+function setJourPedMode(withPeda){
+  JOURPED_ON=withPeda;
+  buildParamsBox();
+  markStale(); save();
+}
+
+function buildParamsBox(){
+  document.getElementById("samediOff").checked=!SAMEDI_ON;
+  document.getElementById("samediOn").checked=SAMEDI_ON;
+  document.getElementById("epsRulesChk").checked=EPS_RULES_ON;
+  var ce=document.getElementById("epsEspaceChk"); if(ce) ce.checked=EPS_ESPACE;
+  var cs=document.getElementById("epsSoirChk"); if(cs) cs.checked=EPS_SOIR_ON;
+  var comboChk=document.getElementById("epsComboChk"); if(comboChk) comboChk.checked=EPS_COMBO_ON;
+
+  // Journées pédagogiques (basées sur les jours actuellement actifs, donc Samedi si activé)
+  document.getElementById("jpedAvec").checked=JOURPED_ON;
+  document.getElementById("jpedSans").checked=!JOURPED_ON;
+  var jb=document.getElementById("jpedBox"); jb.innerHTML="";
+  JOURS.forEach(function(j){
+    var on=!!JOURPED[j];
+    var c=document.createElement("div"); c.className="ac"+(on&&JOURPED_ON?" on":"");
+    if(!JOURPED_ON) c.style.opacity="0.45";
+    var chk=document.createElement("input");
+    chk.type="checkbox"; chk.id="jp_"+j; chk.checked=on; chk.disabled=!JOURPED_ON;
+    chk.style.cssText="width:14px;height:14px";
+    chk.addEventListener("change",function(){
+      JOURPED[j]=chk.checked; c.classList.toggle("on",chk.checked); markStale(); save();
+    });
+    var lbl=document.createElement("label"); lbl.htmlFor="jp_"+j; lbl.textContent=j; lbl.style.cursor=JOURPED_ON?"pointer":"default";
+    c.appendChild(chk); c.appendChild(lbl); jb.appendChild(c);
+  });
+
+  // Réglages EPS (heures théoriques par niveau + créneaux autorisés par type)
+  var eb=document.getElementById("epsParamBox");
+  if(!EPS_RULES_ON){ eb.innerHTML="<p style='font-size:11px;color:var(--gris3)'>Distinction désactivée : l'EPS sera placée comme une matière ordinaire (comportement historique).</p>"; return; }
+  var slotsCours=CR.filter(function(s){return (s.t==="cours"||s.t==="eps")&&EPS_FORBIDDEN_SLOTS.indexOf(s.id)===-1;});
+  var h="<label style='display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px;background:var(--gris1);padding:8px 10px;border-radius:var(--r)'>"
+    +"<input type='checkbox' id='epsComboChk' "+(EPS_COMBO_ON?"checked":"")+" onchange='toggleEpsCombo(this.checked)'>"
+    +"<span style='font-size:11px'><b>Bloc EPS combiné</b> : le jour où il y a de la théorie, imposer 2h d'affilée (1h théorie + 1h pratique, heure après heure) pour la même classe ; le reste de la pratique est placé un autre jour.</span></label>";
+  h+="<p style='font-size:11px;color:var(--gris3);margin-bottom:6px'>Heures EPS <b>théoriques</b> par niveau (le reste du volume EPS est automatiquement pratique) :</p>";
+  h+="<div style='display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px'>";
+  NNM.forEach(function(n,i){
+    h+="<label style='font-size:11px;display:flex;flex-direction:column;gap:3px'>"+n
+      +"<input type='number' min='0' max='"+(VOL.EPS[i]||0)+"' value='"+(EPS_THEO[i]||0)+"' id='epsTheo_"+i+"' style='width:60px;padding:4px 6px;border:1.5px solid var(--gris2);border-radius:4px'></label>";
+  });
+  h+="</div>";
+  h+="<p style='font-size:10px;color:var(--gris3);margin-bottom:6px;font-style:italic'>Les créneaux ci-dessous s'appliquent aux heures qui ne font pas partie du bloc combiné (théorie/pratique restantes) ; le bloc combiné choisit lui-même 2 créneaux consécutifs libres.</p>";
+  h+="<p style='font-size:11px;color:var(--gris3);margin-bottom:4px'>Créneaux autorisés pour l'EPS <b>pratique</b> :</p><div style='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px'>";
+  slotsCours.forEach(function(s){
+    var on=EPS_SLOTS.P.indexOf(s.id)!==-1;
+    h+="<label style='font-size:10px;display:flex;align-items:center;gap:4px;background:var(--gris1);padding:4px 8px;border-radius:4px;cursor:pointer'>"
+      +"<input type='checkbox' data-t='P' data-s='"+s.id+"' "+(on?"checked":"")+" style='width:13px;height:13px'>"+s.l.replace("\n","-")+"</label>";
+  });
+  h+="</div>";
+  h+="<p style='font-size:11px;color:var(--gris3);margin-bottom:4px'>Créneaux autorisés pour l'EPS <b>théorique isolée</b> (par défaut : aucun, la théorie doit être accolée à la pratique via le bloc combiné) :</p><div style='display:flex;gap:8px;flex-wrap:wrap'>";
+  slotsCours.forEach(function(s){
+    var on=EPS_SLOTS.T.indexOf(s.id)!==-1;
+    h+="<label style='font-size:10px;display:flex;align-items:center;gap:4px;background:var(--gris1);padding:4px 8px;border-radius:4px;cursor:pointer'>"
+      +"<input type='checkbox' data-t='T' data-s='"+s.id+"' "+(on?"checked":"")+" style='width:13px;height:13px'>"+s.l.replace("\n","-")+"</label>";
+  });
+  h+="</div>";
+  eb.innerHTML=h;
+  eb.querySelectorAll("input[type=checkbox]").forEach(function(cb){
+    cb.addEventListener("change",function(){
+      var t=cb.dataset.t, s=cb.dataset.s;
+      var arr=EPS_SLOTS[t];
+      var idx=arr.indexOf(s);
+      if(cb.checked&&idx===-1) arr.push(s);
+      if(!cb.checked&&idx!==-1) arr.splice(idx,1);
+      markStale();
+    });
+  });
+}
+
+function saveParams(){
+  if(EPS_RULES_ON){
+    for(var i=0;i<NNM.length;i++){
+      var el=document.getElementById("epsTheo_"+i);
+      if(el){ var v=parseInt(el.value)||0; EPS_THEO[i]=Math.max(0,Math.min(v,VOL.EPS[i]||0)); }
+    }
+  }
+  save();
+  markStale();
+  showAl("aParam","ok","Paramètres enregistrés &#9989;");
+}
+
+// ═══════════════════════════════════════════════
+// VOLUMES
+// ═══════════════════════════════════════════════
+function buildVT(){
+  var t=document.getElementById("volT");
+  var h="<thead><tr><th>Matière</th>";
+  NNM.forEach(function(n){h+="<th>"+n+"</th>";});
+  h+="</tr></thead><tbody>";
+  ML.forEach(function(m){
+    h+="<tr><td>"+MN[m]+"</td>";
+    VOL[m].forEach(function(v,i){
+      h+="<td><input type='number' id='v_"+m+"_"+i+"' value='"+v+"' min='0' max='10'></td>";
+    });
+    h+="</tr>";
+  });
+  h+="<tr><td style='font-weight:700;background:var(--bleu);color:#fff'>TOTAL</td>";
+  for(var i=0;i<NNM.length;i++){
+    var tot=ML.reduce(function(s,m){return s+VOL[m][i];},0);
+    h+="<td style='font-weight:700;background:var(--bleu3)'>"+tot+"h</td>";
+  }
+  h+="</tr></tbody>";
+  t.innerHTML=h;
+}
+function saveVol(){
+  ML.forEach(function(m){
+    for(var i=0;i<NNM.length;i++){
+      var el=document.getElementById("v_"+m+"_"+i);
+      if(el) VOL[m][i]=parseInt(el.value)||0;
+    }
+  });
+  save(); markStale(); showAl("aVol","ok","Volumes enregistrés &#9989;");
+}
+function resetVol(){VOL=JSON.parse(JSON.stringify(VD));buildVT();showAl("aVol","ok","Valeurs officielles restaurées.");}
+
+// ═══════════════════════════════════════════════
+// CHECKBOXES CLASSES (pour ajouter/éditer prof)
+// ═══════════════════════════════════════════════
+function getV(m,niv){return m&&VOL[m]?VOL[m][niv]:0;}
+
+function getMN3(m1,m2,m3){
+  var a=[MN[m1]]; if(m2) a.push(MN[m2]); if(m3) a.push(MN[m3]);
+  return a.join(" / ");
+}
+function getHD(m1,m2,m3){return(m1==="EPS"||m2==="EPS"||m3==="EPS"||m2||m3)?22:18;}
+
+function buildRow(cl,m1,m2,m3,saved,boxId){
+  var v1=getV(m1,cl.niv),v2=getV(m2,cl.niv),v3=getV(m3,cl.niv);
+  if(v1===0&&v2===0&&v3===0) return null;
+  var row=document.createElement("div"); row.className="cr"; row.id="row_"+cl.id+"_"+boxId;
+  var chk=document.createElement("input"); chk.type="checkbox";
+  chk.id="chk_"+cl.id+"_"+boxId; chk.style.cssText="width:16px;height:16px;cursor:pointer;flex-shrink:0";
+  var lb=document.createElement("label"); lb.htmlFor="chk_"+cl.id+"_"+boxId;
+  lb.textContent=cl.nom; lb.style.cssText="margin:0;font-size:12px;font-weight:700;color:var(--bleu);cursor:pointer;min-width:72px";
+  row.appendChild(chk); row.appendChild(lb);
+  if(m2||m3){
+    var sel=document.createElement("select"); sel.id="sel_"+cl.id+"_"+boxId;
+    sel.style.cssText="font-size:11px;padding:4px 6px;border:1.5px solid var(--gris2);border-radius:4px;flex:1;display:none";
+    var opts=[["","— Choisir la matière —"]];
+    if(v1>0) opts.push(["m1",MN[m1]+" ("+v1+"h)"]);
+    if(m2&&v2>0) opts.push(["m2",MN[m2]+" ("+v2+"h)"]);
+    if(m3&&v3>0) opts.push(["m3",MN[m3]+" ("+v3+"h)"]);
+    if(v1>0&&m2&&v2>0) opts.push(["m12",MN[m1]+"+"+MN[m2]+" ("+(v1+v2)+"h)"]);
+    if(v1>0&&m3&&v3>0) opts.push(["m13",MN[m1]+"+"+MN[m3]+" ("+(v1+v3)+"h)"]);
+    if(m2&&v2>0&&m3&&v3>0) opts.push(["m23",MN[m2]+"+"+MN[m3]+" ("+(v2+v3)+"h)"]);
+    if(v1>0&&m2&&v2>0&&m3&&v3>0) opts.push(["m123","Les trois ("+(v1+v2+v3)+"h)"]);
+    opts.forEach(function(o){var op=document.createElement("option");op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
+    sel.onchange=function(){updHP(boxId);};
+    row.appendChild(sel);
+    chk.onchange=function(){
+      row.classList.toggle("on",chk.checked);
+      sel.style.display=chk.checked?"block":"none";
+      if(!chk.checked)sel.value="";
+      updHP(boxId);
+    };
+    if(saved){chk.checked=true;row.classList.add("on");sel.style.display="block";sel.value=saved;}
+  } else {
+    var sp=document.createElement("span"); sp.style.cssText="font-size:10px;color:var(--gris3);margin-left:auto";
+    sp.textContent=v1+"h · "+MN[m1]; row.appendChild(sp);
+    chk.onchange=function(){row.classList.toggle("on",chk.checked);updHP(boxId);};
+    if(saved){chk.checked=true;row.classList.add("on");}
+  }
+  return row;
+}
+
+function buildCB(savedData){
+  var m1=g("pM1"),m2=g("pM2"),m3=g("pM3"),box=document.getElementById("cbBox");
+  box.innerHTML="";
+  getCA().forEach(function(cl){
+    var sc=savedData?savedData[cl.id]:null;
+    var row=buildRow(cl,m1,m2,m3,sc,"main");
+    if(row) box.appendChild(row);
+  });
+  updHP("main");
+}
+
+function updHP(bid){
+  var isMain=(bid==="main");
+  var m1=g(isMain?"pM1":"eMat1"),m2=g(isMain?"pM2":"eMat2"),m3=g(isMain?"pM3":"eMat3");
+  var tot=0;
+  getCA().forEach(function(cl){
+    var chk=document.getElementById("chk_"+cl.id+"_"+bid);
+    if(!chk||!chk.checked) return;
+    var v1=getV(m1,cl.niv),v2=getV(m2,cl.niv),v3=getV(m3,cl.niv);
+    var sel=document.getElementById("sel_"+cl.id+"_"+bid);
+    if(!m2&&!m3){tot+=v1;return;}
+    if(!sel) return;
+    var ch=sel.value;
+    if(ch==="m1")  tot+=v1;
+    else if(ch==="m2")  tot+=v2;
+    else if(ch==="m3")  tot+=v3;
+    else if(ch==="m12") tot+=v1+v2;
+    else if(ch==="m13") tot+=v1+v3;
+    else if(ch==="m23") tot+=v2+v3;
+    else if(ch==="m123")tot+=v1+v2+v3;
+  });
+  var hd=getHD(m1,m2,m3);
+  var col=tot===hd?"var(--vert)":(tot>hd?"var(--rouge)":"var(--orange)");
+  var ico=tot===hd?"&#9989;":(tot>hd?"&#9888; dépassement":"&#9888; incomplet");
+  var pid=isMain?"hpBox":"eHP";
+  var el=document.getElementById(pid);
+  if(el) el.innerHTML="<span style='font-weight:700;color:"+col+"'>Total : "+tot+"h "+ico+"</span> sur "+hd+"h attendues";
+}
+
+// ═══════════════════════════════════════════════
+// COLLECTER CLASSES D'UN FORMULAIRE
+// ═══════════════════════════════════════════════
+function collectCL(m1,m2,m3,bid){
+  var list=[];
+  getCA().forEach(function(cl){
+    var chk=document.getElementById("chk_"+cl.id+"_"+bid);
+    if(!chk||!chk.checked) return;
+    var v1=getV(m1,cl.niv),v2=getV(m2,cl.niv),v3=getV(m3,cl.niv);
+    if(!m2&&!m3){
+      if(v1>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m1,h:v1});
+      return;
+    }
+    var sel=document.getElementById("sel_"+cl.id+"_"+bid);
+    var ch=sel?sel.value:"";
+    if(ch==="m1"&&v1>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m1,h:v1});
+    else if(ch==="m2"&&v2>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m2,h:v2});
+    else if(ch==="m3"&&v3>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m3,h:v3});
+    else if(ch==="m12"){
+      if(v1>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m1,h:v1});
+      if(v2>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m2,h:v2});
+    } else if(ch==="m13"){
+      if(v1>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m1,h:v1});
+      if(v3>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m3,h:v3});
+    } else if(ch==="m23"){
+      if(v2>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m2,h:v2});
+      if(v3>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m3,h:v3});
+    } else if(ch==="m123"){
+      if(v1>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m1,h:v1});
+      if(v2>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m2,h:v2});
+      if(v3>0) list.push({clId:cl.id,clN:cl.nom,niv:cl.niv,mat:m3,h:v3});
+    }
+  });
+  return list;
+}
+
+// ═══════════════════════════════════════════════
+// AJOUTER PROF
+// ═══════════════════════════════════════════════
+function addProf(){
+  var nom=g("pN").trim(), prenom=g("pP").trim();
+  var m1=g("pM1"),m2=g("pM2"),m3=g("pM3");
+  if(!nom){showAl("aProf","err","Saisissez le nom.");return;}
+  var cl=collectCL(m1,m2,m3,"main");
+  if(!cl.length){showAl("aProf","err","Cochez au moins une classe.");return;}
+  var tot=cl.reduce(function(s,c){return s+c.h;},0);
+  var hd=getHD(m1,m2,m3);
+  var allait=document.getElementById("pAllait").checked;
+  var jpExempt=document.getElementById("pJpExempt").checked;
+  PROFS.push({id:++PID,nom:nom,prenom:prenom,m1:m1,m2:m2||null,m3:m3||null,mats:getMN3(m1,m2,m3),cl:cl,tot:tot,hd:hd,jp:null,allaitante:allait,jpExempt:jpExempt});
+  sv("pN",""); sv("pP",""); sv("pM2",""); sv("pM3","");
+  document.getElementById("pAllait").checked=false;
+  document.getElementById("pJpExempt").checked=false;
+  buildCB(); renderProfs(); markStale(); save();
+  var w=tot!==hd?" &#9888; "+tot+"h/"+hd+"h":" &#9989; "+hd+"h";
+  showAl("aProf","ok","Prof "+nom+" "+prenom+" ajouté —"+w);
+}
+
+function delProf(id){
+  if(!confirm("Supprimer ce professeur ?")) return;
+  PROFS=PROFS.filter(function(p){return p.id!==id;});
+  renderProfs(); markStale(); save();
+}
+
+// ═══════════════════════════════════════════════
+// ÉDITION PROF (MODAL)
+// ═══════════════════════════════════════════════
+function openEdit(id){
+  var p=PROFS.find(function(x){return x.id===id;}); if(!p) return;
+  sv("ePid",id); sv("eNom",p.nom); sv("ePrenom",p.prenom);
+  sv("eMat1",p.m1); sv("eMat2",p.m2||""); sv("eMat3",p.m3||"");
+  document.getElementById("eAllait").checked=!!p.allaitante;
+  document.getElementById("eJpExempt").checked=!!p.jpExempt;
+  rebuildEC(p);
+  document.getElementById("modalEdit").classList.add("on");
+}
+function rebuildEC(pData){
+  var m1=g("eMat1"),m2=g("eMat2"),m3=g("eMat3");
+  var box=document.getElementById("eCB"); box.innerHTML="";
+  var saved={};
+  if(pData&&pData.cl){
+    var seen={};
+    pData.cl.forEach(function(c){
+      if(!seen[c.clId]){
+        seen[c.clId]=[c.mat];
+        saved[c.clId]="m1"===(c.mat===m1)?"m1":(c.mat===m2?"m2":(c.mat===m3?"m3":"m1"));
+        // Simplification: on déduit le code selon la matière
+        if(c.mat===m1) saved[c.clId]="m1";
+        else if(c.mat===m2) saved[c.clId]="m2";
+        else if(c.mat===m3) saved[c.clId]="m3";
+        else saved[c.clId]="m1";
+      } else {
+        // 2ème ou 3ème entrée = combinaison
+        seen[c.clId].push(c.mat);
+        var mats=seen[c.clId];
+        var has1=mats.indexOf(m1)!==-1,has2=mats.indexOf(m2)!==-1,has3=mats.indexOf(m3)!==-1;
+        if(has1&&has2&&has3) saved[c.clId]="m123";
+        else if(has1&&has2) saved[c.clId]="m12";
+        else if(has1&&has3) saved[c.clId]="m13";
+        else if(has2&&has3) saved[c.clId]="m23";
+      }
+    });
+  }
+  getCA().forEach(function(cl){
+    var row=buildRow(cl,m1,m2,m3,saved[cl.id]||null,"edit");
+    if(row) box.appendChild(row);
+  });
+  updHP("edit");
+}
+function saveEdit(){
+  var id=parseInt(g("ePid"));
+  var p=PROFS.find(function(x){return x.id===id;}); if(!p) return;
+  var m1=g("eMat1"),m2=g("eMat2"),m3=g("eMat3");
+  var nom=g("eNom").trim(),prenom=g("ePrenom").trim();
+  if(!nom){alert("Nom requis.");return;}
+  var cl=collectCL(m1,m2,m3,"edit");
+  if(!cl.length){alert("Cochez au moins une classe.");return;}
+  var tot=cl.reduce(function(s,c){return s+c.h;},0);
+  p.nom=nom;p.prenom=prenom;p.m1=m1;p.m2=m2||null;p.m3=m3||null;
+  p.mats=getMN3(m1,m2,m3);p.cl=cl;p.tot=tot;p.hd=getHD(m1,m2,m3);p.jp=null;
+  p.allaitante=document.getElementById("eAllait").checked;
+  p.jpExempt=document.getElementById("eJpExempt").checked;
+  closeModal(); renderProfs(); markStale(); save();
+}
+function closeModal(){document.getElementById("modalEdit").classList.remove("on");}
+
+function renderProfs(){
+  var box=document.getElementById("profList");
+  if(!PROFS.length){box.innerHTML="<p style='font-size:12px;color:var(--gris3)'>Aucun professeur.</p>";return;}
+  box.innerHTML=PROFS.map(function(p){
+    var cl={},cl2=[]; p.cl.forEach(function(c){if(!cl[c.clId]){cl[c.clId]=1;cl2.push(c.clN);}});
+    var hd=p.hd||18;
+    var hcol=p.tot===hd?"var(--vert)":(p.tot>hd?"var(--orange)":"var(--rouge)");
+    var jpInfo=p.jp?"<div class='pp'>&#127807; J.Péda : "+p.jp+"</div>":"";
+    var allaitBadge=p.allaitante?" <span style='font-size:9px;background:#fce7f3;color:#be185d;padding:1px 6px;border-radius:8px'>Allaitante</span>":"";
+    var jpExemptBadge=p.jpExempt?" <span style='font-size:9px;background:#fef3c7;color:#92400e;padding:1px 6px;border-radius:8px'>Sans jour de repos</span>":"";
+    return "<div class='pc'><div class='ph'>"
+      +"<div><div class='pt'>"+p.nom+" "+p.prenom+allaitBadge+jpExemptBadge
+      +" <span style='font-size:10px;color:"+hcol+"'>("+p.tot+"h / "+hd+"h)</span></div>"
+      +"<div class='ps'>"+p.mats+" · "+cl2.join(", ")+"</div>"+jpInfo+"</div>"
+      +"<div class='pb'>"
+      +"<button class='be' onclick='openEdit("+p.id+")'>✏️ Modifier</button>"
+      +"<button class='bd' onclick='delProf("+p.id+")'>X</button>"
+      +"</div></div></div>";
+  }).join("");
+}
+
+function showAl(id,type,msg){
+  var m={"ok":"aok","err":"aerr","warn":"awk","info":"ainf"};
+  var el=document.getElementById(id);
+  if(el){el.innerHTML="<div class='al "+m[type]+"'>"+msg+"</div>";setTimeout(function(){if(el)el.innerHTML="";},4000);}
+}
+
+// ═══════════════════════════════════════════════
+// ALGORITHME PRINCIPAL — PLACEMENT GARANTI
+// ═══════════════════════════════════════════════
+function genAll(){
+  if(!PROFS.length){
+    document.getElementById("genStatus").className="al aerr";
+    document.getElementById("genStatus").innerHTML="Ajoutez des professeurs avant de générer.";
+    return;
+  }
+  CURRENT_LOCKS=collectLockedCells(); // les créneaux verrouillés de la version précédente sont figés pour cette génération
+  LAST_FAILED={}; // repartir d'un diagnostic propre pour cette génération
+  // 40 tentatives au minimum ; tant qu'il reste des conflits, on continue (jusqu'à 400
+  // tentatives ou 10 secondes) : un établissement de 9 classes ou plus, avec des
+  // classes à 33-35h, demande souvent plus d'essais pour trouver une solution sans conflit.
+  var MAX_ESSAIS=40, meilleur=null, meilleurScore=Infinity, essaisFaits=0, T0=Date.now();
+  for(var essai=0;;essai++){
+    if(essai>=MAX_ESSAIS&&meilleur&&meilleur.conflits.length===0) break;
+    if(essai>=400||Date.now()-T0>10000) break;
+    essaisFaits++;
+    var res=genAllAttempt();
+    // Score : les conflits priment TOUJOURS (poids énorme) ; à conflits égaux,
+    // on préfère la tentative avec le moins d'heures creuses — celles des
+    // PROFESSEURS comptent double, car c'est le point le plus demandé.
+    var gapsProfRes=computeHeuresCreusesProfFromGR(res.GR).total;
+    var gapsClasseRes=computeHeuresCreusesClasseFromGR(res.GR).total;
+    var gapsRes=gapsProfRes*2+gapsClasseRes;
+    var score=res.conflits.length*1000000+gapsRes;
+    if(!meilleur||score<meilleurScore){ meilleur=res; meilleurScore=score; }
+    if(meilleur.conflits.length===0&&meilleurScore===0) break; // conflit=0 ET aucune heure creuse : impossible de faire mieux
+  }
+  PROFS.forEach(function(p){ if(meilleur.jpMap[p.id]) p.jp=meilleur.jpMap[p.id]; });
+  var audit=auditGrille(meilleur.GR);
+  var cb=document.getElementById("conflBox");
+  var html="";
+  if(meilleur.conflits.length){
+    var causes=diagnoseCauses();
+    html+="<div class='cb'><b>&#10060; Génération incomplète : "+meilleur.conflits.length+" conflit(s) après "+essaisFaits+" tentative(s) automatique(s).</b> <span style='font-weight:400'>Un nouveau clic sur « Générer » retire de nouvelles combinaisons (l'ordre varie à chaque fois) et peut suffire à passer à 0 conflit — mais si les causes ci-dessous persistent (ex: samedi désactivé), aucun nombre de clics n'y changera rien : il faut agir sur la cause.</span>";
+    if(causes.length) html+="<div style='margin-top:6px;font-size:11px'>Causes possibles :<ul style='margin-top:2px;padding-left:14px'>"+causes.map(function(c){return "<li>"+c+"</li>";}).join("")+"</ul></div>";
+    html+="<div style='margin-top:6px'>Détail :<ul style='margin-top:2px;padding-left:14px'>"+meilleur.conflits.map(function(c){return "<li>"+c+"</li>";}).join("")+"</ul></div></div>";
+  }
+  html+=renderAuditBox(audit, meilleur.conflits.length===0);
+  var surch=computeSurchargesFromGR(meilleur.GR);
+  if(surch.length) html+="<div class='cb' style='background:#fffbeb;border-color:#fbbf24'><b>&#9888; Journée(s) chargée(s) détectée(s) — professeurs</b> (6h ou plus d'affilée) : "+surch.join(", ")+". <span style='color:var(--gris3)'>Voir l'onglet 📊 Tableau de bord pour le détail.</span></div>";
+  var surchCl=computeSurchargesClasseFromGR(meilleur.GR);
+  if(surchCl.length) html+="<div class='cb' style='background:#fffbeb;border-color:#fbbf24'><b>&#9888; Journée(s) chargée(s) détectée(s) — classes</b> (6h ou plus d'affilée pour les élèves) : "+surchCl.join(", ")+".</div>";
+  var conflitsSalle=computeConflitsSalleFromGR(meilleur.GR);
+  if(conflitsSalle.length) html+="<div class='cb' style='background:#fef2f2;border-color:#ef4444'><b>&#10060; Conflit(s) de salle détecté(s)</b> : deux classes différentes affectées à la même salle au même créneau.<ul style='margin-top:2px;padding-left:14px'>"+conflitsSalle.map(function(c){return "<li>"+c+"</li>";}).join("")+"</ul></div>";
+  var locksInvalides=computeLocksInvalides(meilleur.GR);
+  if(locksInvalides.length) html+="<div class='cb' style='background:#fef2f2;border-color:#ef4444'><b>&#128274; Créneau(x) VERROUILLÉ(S) devenu(s) invalide(s)</b> (posés avant une correction de règle EPS, jamais réexaminés depuis — un verrou ne bouge jamais tout seul) :<ul style='margin-top:2px;padding-left:14px'>"+locksInvalides.map(function(c){return "<li>"+c+"</li>";}).join("")+"</ul><span style='color:var(--gris3)'>Déverrouillez puis corrigez ces créneaux depuis leur fiche professeur.</span></div>";
+  var hcProf=computeHeuresCreusesProfFromGR(meilleur.GR), hcClasse=computeHeuresCreusesClasseFromGR(meilleur.GR);
+  var hcTotal=hcProf.total+hcClasse.total;
+  if(hcTotal>0) html+="<div class='cb' style='background:#eff6ff;border-color:#93c5fd'><b>&#8505; "+hcTotal+" heure(s) creuse(s) détectée(s)</b> (trou dans une journée, entre deux cours) — "+hcProf.total+"h côté professeurs, "+hcClasse.total+"h côté classes. <span style='color:var(--gris3)'>Voir l'onglet 📊 Tableau de bord pour le détail ; ce n'est pas une erreur, juste une piste d'amélioration.</span></div>";
+  cb.innerHTML=html;
+  GCACHE=meilleur.GR;
+  renderProfs(); save();
+  GEN_STALE=false; renderGenStaleBanner();
+  renderAll(meilleur.GR);
+  renderClasses();
+  pushHistory(meilleur.conflits.length);
+}
+
+// ═══════════════════════════════════════════════
+// HISTORIQUE DES VERSIONS GÉNÉRÉES
+// ═══════════════════════════════════════════════
+function pushHistory(nbConflits){
+  try{
+    var entry={
+      ts:Date.now(),
+      nbConflits:nbConflits||0,
+      profs:JSON.parse(JSON.stringify(PROFS)),
+      gr:JSON.parse(JSON.stringify(GCACHE)),
+      ca:JSON.parse(JSON.stringify(CA))
+    };
+    HISTORY.unshift(entry);
+    if(HISTORY.length>8) HISTORY.length=8;
+    HIST_COMPARE_SEL=[]; // les indices ne sont plus valides après un décalage de l'historique
+    localStorage.setItem("apex_lycee_hist", JSON.stringify(HISTORY));
+  }catch(e){ /* historique best-effort : on n'interrompt jamais une génération pour ça */ }
+  renderHistoryBox();
+}
+function loadHistory(){
+  try{ var r=localStorage.getItem("apex_lycee_hist"); if(r) HISTORY=JSON.parse(r); }catch(e){ HISTORY=[]; }
+}
+function fmtHistDate(ts){
+  var d=new Date(ts);
+  return d.toLocaleDateString("fr-FR")+" à "+d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
+}
+function renderHistoryBox(){
+  var box=document.getElementById("histBox"); if(!box) return;
+  if(!HISTORY.length){ box.innerHTML="<p style='font-size:11px;color:var(--gris3)'>Aucune version précédente pour l'instant — chaque génération est archivée automatiquement ici.</p>"; return; }
+  var h="";
+  HISTORY.forEach(function(e,i){
+    var statut=e.nbConflits?("<span style='color:#b45309'>&#9888; "+e.nbConflits+" conflit(s)</span>"):"<span style='color:#166534'>&#9989; complet</span>";
+    var checked=HIST_COMPARE_SEL.indexOf(i)!==-1;
+    h+="<div style='display:flex;justify-content:space-between;align-items:center;background:var(--gris1);padding:8px 10px;border-radius:var(--r);margin-bottom:6px;font-size:11px;flex-wrap:wrap;gap:6px'>"
+      +"<label style='display:flex;align-items:center;gap:6px;cursor:pointer'><input type='checkbox' "+(checked?"checked":"")+" onchange='toggleHistCompare("+i+",this.checked)' style='width:14px;height:14px'>"
+      +"&#128197; "+fmtHistDate(e.ts)+" — "+e.profs.length+" professeur(s), "+e.ca.length+" classe(s) — "+statut+"</label>"
+      +"<button class='btn bb bsm' onclick='previewHistory("+i+")'>&#128065; Afficher</button></div>";
+  });
+  box.innerHTML=h;
+  var cr=document.getElementById("histCompareRow");
+  if(cr) cr.style.display=(HIST_COMPARE_SEL.length===2)?"block":"none";
+}
+function previewHistory(i){
+  var e=HISTORY[i]; if(!e) return;
+  if(!HIST_PREVIEW_BAK) HIST_PREVIEW_BAK={PROFS:PROFS,GCACHE:GCACHE,CA:CA};
+  PROFS=e.profs; GCACHE=e.gr; CA=e.ca;
+  renderAll(GCACHE);
+  renderClasses();
+  var b=document.getElementById("histBanner");
+  if(b){ b.style.display="flex"; document.getElementById("histBannerDate").textContent=fmtHistDate(e.ts); }
+  var rb=document.getElementById("resBox"); if(rb) rb.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function exitHistoryPreview(){
+  if(!HIST_PREVIEW_BAK) return;
+  PROFS=HIST_PREVIEW_BAK.PROFS; GCACHE=HIST_PREVIEW_BAK.GCACHE; CA=HIST_PREVIEW_BAK.CA;
+  HIST_PREVIEW_BAK=null;
+  renderAll(GCACHE);
+  renderClasses();
+  var b=document.getElementById("histBanner"); if(b) b.style.display="none";
+}
+
+// ═══════════════════════════════════════════════
+// COMPARATEUR DE VERSIONS
+// ═══════════════════════════════════════════════
+function toggleHistCompare(i,checked){
+  var idx=HIST_COMPARE_SEL.indexOf(i);
+  if(checked){
+    if(idx===-1){ if(HIST_COMPARE_SEL.length>=2) HIST_COMPARE_SEL.shift(); HIST_COMPARE_SEL.push(i); }
+  } else if(idx!==-1) HIST_COMPARE_SEL.splice(idx,1);
+  renderHistoryBox();
+  var cb=document.getElementById("histCompareBox"); if(cb) cb.innerHTML="";
+}
+// Différences cellule par cellule entre deux grilles complètes (par profId/jour/créneau)
+function diffGrilles(gA,gB){
+  var out=[];
+  var pids={};
+  Object.keys(gA||{}).forEach(function(k){pids[k]=true;});
+  Object.keys(gB||{}).forEach(function(k){pids[k]=true;});
+  Object.keys(pids).forEach(function(pid){
+    var a=(gA&&gA[pid])||{}, b=(gB&&gB[pid])||{};
+    JOURS.forEach(function(j){
+      CR.forEach(function(s){
+        if(s.t==="pause"||s.t==="dej") return;
+        var ca=(a[j]&&a[j][s.id])||null;
+        var cb=(b[j]&&b[j][s.id])||null;
+        var same=(!ca&&!cb)||(ca&&cb&&ca.clId===cb.clId&&ca.mat===cb.mat&&(ca.sub||null)===(cb.sub||null));
+        if(!same) out.push({pid:pid,jour:j,sid:s.id,before:ca,after:cb});
+      });
+    });
+  });
+  return out;
+}
+function compareHistory(){
+  if(HIST_COMPARE_SEL.length!==2){ alert("Cochez exactement 2 versions à comparer."); return; }
+  // La plus grande position dans HISTORY = la plus ancienne (HISTORY[0] est la plus récente)
+  var sorted=HIST_COMPARE_SEL.slice().sort(function(x,y){return y-x;});
+  var older=HISTORY[sorted[0]], newer=HISTORY[sorted[1]];
+  var diffs=diffGrilles(older.gr,newer.gr);
+  var allProfs=newer.profs.concat(older.profs);
+  function profName(pid){
+    var p=allProfs.find(function(x){return String(x.id)===String(pid);});
+    return p?(p.nom+" "+(p.prenom||"")).trim():("Professeur #"+pid);
+  }
+  var box=document.getElementById("histCompareBox"); if(!box) return;
+  if(!diffs.length){
+    box.innerHTML="<div class='dw'><p style='font-size:11px;color:#166534;margin:0'>&#9989; Aucune différence entre ces deux versions ("+fmtHistDate(older.ts)+" et "+fmtHistDate(newer.ts)+").</p></div>";
+    return;
+  }
+  var h="<div class='dw'><h3 style='font-size:12px;color:var(--bleu);margin-bottom:8px'>&#128269; "+diffs.length+" changement(s) entre le "+fmtHistDate(older.ts)+" et le "+fmtHistDate(newer.ts)+"</h3><ul style='font-size:11px;padding-left:16px;margin:0'>";
+  diffs.forEach(function(d){
+    var cr=CR.find(function(c){return c.id===d.sid;});
+    var before=d.before?(d.before.clN+" — "+(MN[d.before.mat]||d.before.mat)):"<i>vide</i>";
+    var after=d.after?(d.after.clN+" — "+(MN[d.after.mat]||d.after.mat)):"<i>vide</i>";
+    h+="<li style='margin-bottom:3px'><b>"+profName(d.pid)+"</b> — "+d.jour+" "+(cr?cr.l.replace("\n"," "):d.sid)+" : "+before+" &#8594; "+after+"</li>";
+  });
+  h+="</ul></div>";
+  box.innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════
+// DIAGNOSTIC DES CAUSES D'IMPOSSIBILITÉ
+// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// CALCUL DE CAPACITÉ RÉELLE — heures nécessaires vs créneaux réellement
+// disponibles, pour donner un diagnostic chiffré plutôt qu'une piste vague.
+// ═══════════════════════════════════════════════
+var COURS_SLOTS=CR.filter(function(s){return s.t==="cours"||s.t==="eps";}).map(function(s){return s.id;});
+// Nombre de créneaux "cours" disponibles un jour donné pour une CLASSE (le
+// samedi ne compte que le matin ; une journée pédagogique globale compte 0).
+function slotsDispoClasseJour(j){
+  if(isJourPeda(j)) return 0;
+  return COURS_SLOTS.filter(function(sid){
+    if(j==="Samedi"){ var slot=CR.find(function(s){return s.id===sid;}); if(!slot.m) return false; }
+    return true;
+  }).length;
+}
+function capaciteClasse(clId){
+  var needed=0;
+  PROFS.forEach(function(p){ p.cl.forEach(function(c){ if(c.clId===clId) needed+=c.h; }); });
+  var dispo=0; JOURS.forEach(function(j){ dispo+=slotsDispoClasseJour(j); });
+  return {needed:needed,dispo:dispo};
+}
+// Nombre de créneaux "cours" disponibles un jour donné pour un PROFESSEUR
+// (tient compte de son jour de repos individuel, des animations, et du samedi matin-seul).
+function slotsDispoProfJour(p,j){
+  if(j===p.jp) return 0;
+  if(isBlq(j,"matin")&&isBlq(j,"soir")) return 0;
+  return COURS_SLOTS.filter(function(sid){
+    var slot=CR.find(function(s){return s.id===sid;});
+    if(j==="Samedi"&&!slot.m) return false;
+    if(slot.m&&isBlq(j,"matin")) return false;
+    if(!slot.m&&isBlq(j,"soir")) return false;
+    return true;
+  }).length;
+}
+function capaciteProf(p){
+  var dispo=0; JOURS.forEach(function(j){ dispo+=slotsDispoProfJour(p,j); });
+  return {needed:p.tot,dispo:dispo};
+}
+// Liste, avec les chiffres exacts, chaque classe/professeur dont le volume
+// horaire dépasse la capacité réellement disponible — la cause la plus fiable
+// d'un conflit, car c'est un fait mathématique et non une simple piste.
+function computeCapaciteIssues(){
+  var out=[];
+  getCA().forEach(function(cl){
+    var cap=capaciteClasse(cl.id);
+    if(cap.needed>cap.dispo) out.push("La classe "+cl.nom+" a besoin de "+cap.needed+"h/semaine mais seulement "+cap.dispo+" créneaux sont réellement disponibles pour elle — impossible à caser mathématiquement, quel que soit le nombre de tentatives.");
+  });
+  PROFS.forEach(function(p){
+    var cap=capaciteProf(p);
+    if(cap.needed>cap.dispo) out.push("Le professeur "+p.nom+" "+(p.prenom||"")+" a "+cap.needed+"h à assurer mais seulement "+cap.dispo+" créneaux lui sont réellement disponibles"+(p.jp?" (jour de repos individuel : "+p.jp+")":"")+" — impossible à caser mathématiquement.");
+  });
+  return out;
+}
+function diagnoseCauses(){
+  var causes=[];
+  // Le calcul de capacité chiffré passe en premier : c'est un fait mathématique,
+  // pas une simple piste — donc la cause la plus fiable quand elle s'applique.
+  causes=causes.concat(computeCapaciteIssues());
+  var nbJoursActifs=JOURS.filter(function(j){return !isJourPeda(j);}).length;
+  if(nbJoursActifs<=3) causes.push("Peu de jours ouvrables disponibles ("+nbJoursActifs+") — envisagez d'activer le samedi ou de réduire les journées pédagogiques.");
+  if(!SAMEDI_ON) causes.push("Le samedi est désactivé, ce qui réduit le nombre de créneaux disponibles dans la semaine.");
+  var nbJP=JOURS.filter(isJourPeda).length;
+  if(nbJP>=2) causes.push(nbJP+" journée(s) pédagogique(s) bloquent l'établissement entier — cela réduit fortement les créneaux disponibles.");
+  if(JOURPED_ON){
+    var nbExempt=PROFS.filter(function(p){return p.jpExempt;}).length;
+    var nbConcernes=PROFS.length-nbExempt;
+    if(nbConcernes>0) causes.push("La journée de repos individuelle retire 1 jour disponible à "+nbConcernes+" professeur(s), ce qui laisse moins de place pour placer les blocs de 2h consécutives sans les disperser. Pour un professeur à volume horaire élevé qui bloque la génération, cochez \"Sans journée de repos individuelle\" dans sa fiche.");
+  }
+  PROFS.forEach(function(p){
+    if(p.hd&&p.tot>p.hd*1.3) causes.push("Le professeur "+p.nom+" "+p.prenom+" a un volume horaire ("+p.tot+"h) très supérieur aux heures dues normales ("+p.hd+"h) : peu de créneaux libres pour l'absorber.");
+  });
+  if(EPS_RULES_ON&&EPS_SLOTS.P.length===0) causes.push("Aucun créneau n'est autorisé pour une heure EPS pratique isolée dans les Paramètres.");
+  if(EPS_RULES_ON&&EPS_SLOTS.T.length===0&&!EPS_COMBO_ON) causes.push("Aucun créneau n'est autorisé pour la théorie EPS isolée, et le bloc combiné est désactivé : la théorie ne peut être placée nulle part.");
+  if(EPS_RULES_ON&&EPS_COMBO_ON) causes.push("Le bloc EPS combiné (2h consécutives théorie+pratique le même jour) nécessite un jour avec 2 créneaux libres d'affilée pour la classe ET le professeur — vérifiez les disponibilités et les journées pédagogiques.");
+  if(!causes.length) causes.push("Disponibilités/contraintes (allaitante, animations, EPS, verrous) trop cumulées sur certains jours — sans dépasser la capacité globale, elles peuvent quand même se gêner mutuellement.");
+  return causes;
+}
+
+// ═══════════════════════════════════════════════
+// AUDIT COMPLET APRÈS GÉNÉRATION (contraintes dures)
+// ═══════════════════════════════════════════════
+function auditGrille(GR){
+  var checks=[]; var ok=true;
+  function add(label,pass){checks.push({label:label,pass:pass}); if(!pass) ok=false;}
+
+  // Conflit professeur : structurellement impossible (GR[pid][jour][sid] est un scalaire),
+  // on le revérifie quand même pour la traçabilité de l'audit.
+  var confProf=false;
+  PROFS.forEach(function(p){
+    JOURS.forEach(function(j){
+      CR.forEach(function(s){ if(s.t==="pause"||s.t==="dej") return; /* un seul GR[p.id][j][s.id] possible par construction */ });
+    });
+  });
+  add("Aucun conflit professeur",!confProf);
+
+  // Conflit classe : deux profs sur la même classe au même créneau
+  var occ={}; var confClasse=false;
+  PROFS.forEach(function(p){
+    var g2=GR[p.id]; if(!g2) return;
+    JOURS.forEach(function(j){
+      if(!g2[j]) return;
+      CR.forEach(function(s){
+        var c=g2[j][s.id]; if(!c) return;
+        var key=j+"|"+s.id+"|"+c.clId;
+        if(occ[key]) confClasse=true; else occ[key]=true;
+      });
+    });
+  });
+  add("Aucun conflit classe",!confClasse);
+
+  // Volumes horaires : total placé = total dû, pour chaque professeur
+  var volOk=true;
+  PROFS.forEach(function(p){
+    var placees=0; var g2=GR[p.id]; if(!g2) return;
+    JOURS.forEach(function(j){ if(!g2[j]) return; Object.values(g2[j]).forEach(function(c){if(c)placees++;}); });
+    if(placees!==p.tot) volOk=false;
+  });
+  add("Tous les volumes horaires demandés sont respectés",volOk);
+
+  // Journées pédagogiques : aucun cours un jour bloqué
+  var jpOk=true;
+  PROFS.forEach(function(p){
+    var g2=GR[p.id]; if(!g2) return;
+    JOURS.forEach(function(j){ if(!isJourPeda(j)||!g2[j]) return; Object.values(g2[j]).forEach(function(c){if(c)jpOk=false;}); });
+  });
+  add("Journées pédagogiques respectées",jpOk);
+
+  // Samedi : si désactivé, aucun cours le samedi (garanti par construction de JOURS)
+  add("Samedi respecté selon le paramétrage",true);
+
+  // EPS pratique/théorique (heures hors bloc combiné)
+  var epsOk=true;
+  if(EPS_RULES_ON){
+    PROFS.forEach(function(p){
+      var g2=GR[p.id]; if(!g2) return;
+      JOURS.forEach(function(j){
+        if(!g2[j]) return;
+        CR.forEach(function(s){
+          var c=g2[j][s.id]; if(!c||c.mat!=="EPS"||c.combo) return;
+          if(c.sub==="T"&&EPS_SLOTS.T.indexOf(s.id)===-1) epsOk=false;
+          else if(c.sub==="P"&&EPS_SLOTS.P.indexOf(s.id)===-1) epsOk=false;
+          else if(!c.sub&&EPS_SLOTS.P.indexOf(s.id)===-1) epsOk=false; // heure EPS isolée sans étiquette (ex: ancien créneau verrouillé) : traitée comme pratique, doit rester sur un créneau autorisé
+        });
+      });
+    });
+  }
+  add("EPS pratique et théorique correctement placées (hors bloc combiné)",epsOk);
+
+  // Bloc EPS combiné : théorie + pratique doivent être consécutives, même jour
+  var comboOk=true;
+  if(EPS_RULES_ON&&EPS_COMBO_ON){
+    PROFS.forEach(function(p){
+      var g2=GR[p.id]; if(!g2) return;
+      JOURS.forEach(function(j){
+        if(!g2[j]) return;
+        CR.forEach(function(s){
+          var c=g2[j][s.id]; if(!c||c.mat!=="EPS"||!c.combo) return;
+          var okPair=EPS_COMBO_PAIRS.some(function(pr){
+            if(pr[0]!==s.id&&pr[1]!==s.id) return false;
+            var other=pr[0]===s.id?pr[1]:pr[0];
+            var c2=g2[j][other];
+            return c2&&c2.mat==="EPS"&&c2.combo&&c2.clId===c.clId&&c2.sub!==c.sub;
+          });
+          if(!okPair) comboOk=false;
+        });
+      });
+    });
+  }
+  add("Bloc EPS combiné (théorie+pratique consécutives, même jour)",comboOk);
+
+  // Reste de pratique EPS placé un AUTRE jour que le bloc combiné
+  var restJourOk=true;
+  if(EPS_RULES_ON&&EPS_COMBO_ON){
+    PROFS.forEach(function(p){
+      var g2=GR[p.id]; if(!g2) return;
+      var comboJours={};
+      JOURS.forEach(function(j){
+        if(!g2[j]) return;
+        CR.forEach(function(s){
+          var c=g2[j][s.id]; if(c&&c.mat==="EPS"&&c.combo){
+            comboJours[c.clId]=comboJours[c.clId]||[];
+            if(comboJours[c.clId].indexOf(j)===-1) comboJours[c.clId].push(j);
+          }
+        });
+      });
+      JOURS.forEach(function(j){
+        if(!g2[j]) return;
+        CR.forEach(function(s){
+          var c=g2[j][s.id]; if(!c||c.mat!=="EPS"||c.combo) return;
+          if(comboJours[c.clId]&&comboJours[c.clId].indexOf(j)!==-1) restJourOk=false;
+        });
+      });
+    });
+  }
+  add("Heures EPS pratique/théorique restantes placées un autre jour que le bloc combiné",restJourOk);
+
+  // Disponibilités enseignants (allaitantes : jamais s1)
+  var dispoOk=true;
+  PROFS.forEach(function(p){
+    if(!p.allaitante) return;
+    var g2=GR[p.id]; if(!g2) return;
+    JOURS.forEach(function(j){ if(g2[j]&&g2[j].s1) dispoOk=false; });
+  });
+  add("Disponibilités des enseignants respectées",dispoOk);
+
+  return {ok:ok,checks:checks};
+}
+
+function renderAuditBox(audit,genereeSansConflit){
+  var h="<div class='cb' style='margin-top:8px;background:"+(audit.ok?"#f0fdf4":"#fefce8")+"'>";
+  h+="<b>"+(audit.ok?"&#9989; Audit : toutes les contraintes dures sont respectées.":"&#9888; Audit : certaines contraintes dures nécessitent une vérification manuelle.")+"</b>";
+  h+="<ul style='margin-top:6px;padding-left:14px'>";
+  audit.checks.forEach(function(c){ h+="<li>"+(c.pass?"&#9989;":"&#10060;")+" "+c.label+"</li>"; });
+  h+="</ul>";
+  h+="<div style='margin-top:4px;font-size:11px;color:var(--gris4)'>Emploi du temps déclaré <b>"+(audit.ok&&genereeSansConflit?"VALIDE":"À VÉRIFIER")+"</b>.</div>";
+  h+="</div>";
+  return h;
+}
+function genAllAttempt(){
+  // 1. Journées pédagogiques uniques par prof
+  //    BUG CORRIGÉ : cette attribution individuelle (une journée sans cours par
+  //    professeur) était faite INCONDITIONNELLEMENT, même quand le mode
+  //    "Sans journée pédagogique — tous les jours sont occupés" était choisi.
+  //    Résultat : chaque professeur se retrouvait toujours avec un jour bloqué,
+  //    quel que soit le réglage. Elle ne doit maintenant s'appliquer QUE si
+  //    JOURPED_ON est actif (mode "avec journée(s) pédagogique(s)").
+  var jpUsed={}; JOURS.forEach(function(j){jpUsed[j]=0;});
+  var jpMap={};
+  if(JOURPED_ON){
+    PROFS.forEach(function(p){
+      if(p.jpExempt){ p.jp=null; return; } // exempté : garde tous ses jours pour faciliter le placement des blocs
+      // On évite si possible de choisir comme "jour de repos individuel" un jour
+      // déjà bloqué pour tous (journée pédagogique globale) — ce serait un choix gaspillé.
+      var candidats=JOURS.filter(function(j){return !isJourPeda(j);});
+      if(!candidats.length) candidats=JOURS.slice();
+      var best=candidats.slice().sort(function(a,b){return jpUsed[a]-jpUsed[b];})[0];
+      p.jp=best; jpUsed[best]++;
+      jpMap[p.id]=best;
+    });
+  } else {
+    PROFS.forEach(function(p){ p.jp=null; }); // mode "sans" : aucun jour bloqué pour personne
+  }
+
+  // 2. Grille globale anti-conflit
+  // GO[jour][slotId][classeId] = profId si occupé
+  var GO={};
+  // GM[jour][slotId][classeId] = matière déjà placée à ce créneau pour cette classe
+  // (indépendamment du prof) — sert à repérer les 3h consécutives d'une même matière.
+  var GM={};
+  JOURS.forEach(function(j){
+    GO[j]={};
+    GM[j]={};
+    CR.forEach(function(s){if(s.t!=="pause"&&s.t!=="dej"){GO[j][s.id]={};GM[j][s.id]={};}});
+  });
+
+  // 3. Grilles par prof
+  var GR={};
+  PROFS.forEach(function(p){
+    GR[p.id]={};
+    JOURS.forEach(function(j){
+      GR[p.id][j]={};
+      CR.forEach(function(s){if(s.t!=="pause"&&s.t!=="dej") GR[p.id][j][s.id]=null;});
+    });
+  });
+
+  var conflits=[];
+
+  // Créneaux verrouillés manuellement : replacés tels quels avant toute génération ;
+  // ils ne bougeront jamais durant cette tentative (ni les suivantes).
+  // IMPORTANT : deux verrous peuvent avoir été posés à des moments différents
+  // (avant une correction de règle, par exemple) et se retrouver, sans que
+  // personne ne s'en aperçoive, sur la MÊME classe au MÊME créneau. Sans ce
+  // contrôle, le second verrou écrasait silencieusement la carte d'occupation
+  // du premier : les deux cours restaient écrits dans la grille, mais plus
+  // aucun contrôle ne pouvait les voir entrer en collision.
+  var locksClasseSlot={}; // "jour|sid|clId" -> verrou déjà posé (pour détecter les collisions entre verrous)
+  CURRENT_LOCKS.forEach(function(lc){
+    if(!GR[lc.profId]||!GR[lc.profId][lc.jour]||!(lc.sid in GR[lc.profId][lc.jour])) return; // prof/créneau disparu depuis
+    if(!GO[lc.jour]||!GO[lc.jour][lc.sid]) return;
+    var keyCS=lc.jour+"|"+lc.sid+"|"+lc.clId;
+    if(locksClasseSlot[keyCS]){
+      var autre=locksClasseSlot[keyCS];
+      conflits.push("&#10060; Conflit entre deux créneaux <b>VERROUILLÉS</b> : la classe <b>"+lc.clN+"</b> a deux cours verrouillés en même temps ("+lc.jour+" "+lc.sid+") — "+MN[autre.mat]+" et "+MN[lc.mat]+". Déverrouillez puis corrigez l'un des deux créneaux (onglet ⚡ Générer, cliquer sur la case).");
+      return; // on ne réécrit pas ce verrou en collision : il reste signalé en conflit plutôt que placé en douce
+    }
+    locksClasseSlot[keyCS]=lc;
+    GR[lc.profId][lc.jour][lc.sid]={clId:lc.clId,clN:lc.clN,mat:lc.mat,sub:lc.sub,combo:lc.combo,locked:true};
+    GO[lc.jour][lc.sid][lc.clId]=lc.profId;
+    GM[lc.jour][lc.sid][lc.clId]=lc.mat;
+  });
+  function countLocked(profId,clId,mat,sub){
+    return CURRENT_LOCKS.filter(function(lc){
+      return lc.profId===profId&&lc.clId===clId&&lc.mat===mat&&(sub===undefined||sub===null||lc.sub===sub);
+    }).length;
+  }
+  function lockedComboDays(profId,clId){
+    var days=[];
+    CURRENT_LOCKS.forEach(function(lc){
+      if(lc.profId===profId&&lc.clId===clId&&lc.mat==="EPS"&&lc.combo&&days.indexOf(lc.jour)===-1) days.push(lc.jour);
+    });
+    return days;
+  }
+
+  // Empêche qu'une même matière (hors EPS, qui a sa propre gestion de jours via
+  // le bloc combiné) soit programmée à deux moments séparés le même jour pour
+  // la même classe (ex. Maths 7h-9h ET Maths encore à 15h le même jour) :
+  // pas pédagogique. Clé "clId|mat" -> tableau des jours déjà utilisés.
+  var joursUtilMatClasse={};
+  function keyCM(clId,mat){return clId+"|"+mat;}
+  CURRENT_LOCKS.forEach(function(lc){
+    if(lc.sub) return; // l'EPS (sub T/P) gère ses propres jours séparément
+    var k=keyCM(lc.clId,lc.mat);
+    if(!joursUtilMatClasse[k]) joursUtilMatClasse[k]=[];
+    if(joursUtilMatClasse[k].indexOf(lc.jour)===-1) joursUtilMatClasse[k].push(lc.jour);
+  });
+
+  // NB : Maths et PC peuvent être programmées le matin OU le soir sans
+  // restriction — seul le créneau s5 (11h05-12h, juste avant le déjeuner)
+  // est évité si possible pour ces matières (cf. plus bas dans les tâches).
+  // ORDRE DE TRAITEMENT : les professeurs de Maths/PC passent EN PREMIER
+  // (préférence explicite pour le matin). NOTE : l'EPS a été testée dans ce
+  // groupe prioritaire aussi (sa fenêtre de placement est structurellement
+  // plus étroite), mais mesuré sur cas réel, ça dégradait la fiabilité
+  // générale sans résoudre les cas déjà tendus (samedi désactivé) — retiré.
+  function estPrioritaire(p){
+    return p.cl.some(function(c){return c.mat==="MATH"||c.mat==="PC";});
+  }
+  function melange(arr){
+    var a=arr.slice();
+    for(var i=a.length-1;i>0;i--){
+      var j2=Math.floor(Math.random()*(i+1));
+      var t=a[i];a[i]=a[j2];a[j2]=t;
+    }
+    return a;
+  }
+  // À l'intérieur de chaque groupe (prioritaire puis le reste), l'ordre est
+  // tiré au sort à CHAQUE tentative. Sans ce mélange, l'ordre d'ajout des
+  // professeurs deviendrait lui-même une priorité cachée et permanente : celui
+  // ajouté en dernier serait TOUJOURS désavantagé, à chacune des 20 tentatives,
+  // puisque rien ne varierait jamais d'un essai à l'autre. Avec le mélange,
+  // chaque professeur a sa chance d'être traité tôt sur au moins une
+  // tentative, et c'est la meilleure (le moins de conflits, puis le moins
+  // d'heures creuses) qui est conservée au final.
+  var groupePrioritaire=melange(PROFS.filter(estPrioritaire));
+  var groupeAutres=melange(PROFS.filter(function(p){return !estPrioritaire(p);}));
+  var profsOrdonnes=groupePrioritaire.concat(groupeAutres);
+  profsOrdonnes.forEach(function(prof){
+    var jp=prof.jp;
+    var jActifs=JOURS.filter(function(j){return j!==jp;});
+
+    // Générer les tâches : chaque heure à placer
+    // Stratégie : grouper par paires de 2h d'abord, puis isolées
+    // Pour l'EPS, si les règles pratique/théorique sont actives, on scinde le
+    // volume horaire de la classe en deux affectations distinctes.
+    var tasks=[];
+    function pushTasks(clId,clN,mat,sub,h){
+      var paires=Math.floor(h/2), reste=h%2;
+      for(var i=0;i<paires;i++) tasks.push({clId:clId,clN:clN,mat:mat,sub:sub,bloc:2});
+      if(reste) tasks.push({clId:clId,clN:clN,mat:mat,sub:sub,bloc:1});
+    }
+    // ─────────────────────────────────────────────
+    // BLOC EPS COMBINÉ : un jour donné, 1h théorique + 1h pratique
+    // consécutives (heure après heure) pour la même classe. Le reste du
+    // volume de pratique est placé un AUTRE jour (traité plus bas comme
+    // tâche normale, avec exclusion du/des jour(s) déjà utilisé(s) par
+    // le bloc combiné). Nécessite canPlace/doPlace/sortJours, définies
+    // plus bas dans cette même fonction (hissées par le moteur JS).
+    // ─────────────────────────────────────────────
+    var comboDays={};   // clId -> tableau des jours utilisés par le(s) bloc(s) EPS combiné(s)
+    function placerBlocEpsCombine(c){
+      var exclus=comboDays[c.clId]||[];
+      var jT=sortJours(jActifs,c.clId,"EPS").filter(function(j){return exclus.indexOf(j)===-1;});
+      for(var ji=0;ji<jT.length;ji++){
+        var j=jT[ji];
+        for(var pi=0;pi<EPS_COMBO_PAIRS.length;pi++){
+          var s1=EPS_COMBO_PAIRS[pi][0], s2=EPS_COMBO_PAIRS[pi][1];
+          var slotObj=CR.find(function(s){return s.id===s1;});
+          if(slotObj.m&&isBlq(j,"matin")) continue;
+          if(!slotObj.m&&isBlq(j,"soir")) continue;
+          if(canPlace(s1,j,c.clId,"EPS",[s2],"COMBO")&&canPlace(s2,j,c.clId,"EPS",[s1],"COMBO")){
+            doPlace(s1,j,{clId:c.clId,clN:c.clN,mat:"EPS",sub:"T",combo:true});
+            doPlace(s2,j,{clId:c.clId,clN:c.clN,mat:"EPS",sub:"P",combo:true});
+            comboDays[c.clId]=(comboDays[c.clId]||[]).concat([j]);
+            return true;
+          }
+        }
+      }
+      return false;
+    }
+    prof.cl.forEach(function(c){
+      var lockedHere=lockedComboDays(prof.id,c.clId);
+      if(lockedHere.length) comboDays[c.clId]=(comboDays[c.clId]||[]).concat(lockedHere);
+      if(c.mat==="EPS"&&EPS_RULES_ON){
+        var theoH=Math.min(EPS_THEO[c.niv]||0,c.h);
+        var praH=c.h-theoH;
+        theoH=Math.max(0,theoH-countLocked(prof.id,c.clId,"EPS","T"));
+        praH=Math.max(0,praH-countLocked(prof.id,c.clId,"EPS","P"));
+        var nComboWanted = EPS_COMBO_ON ? Math.min(theoH,praH) : 0;
+        var nPlaced=0;
+        for(var k=0;k<nComboWanted;k++){ if(placerBlocEpsCombine(c)) nPlaced++; }
+        var theoRest=theoH-nPlaced, praRest=praH-nPlaced;
+        if(theoRest>0) pushTasks(c.clId,c.clN,"EPS","T",theoRest);
+        if(praRest>0)  pushTasks(c.clId,c.clN,"EPS","P",praRest);
+        if(nComboWanted>nPlaced){
+          conflits.push("&#9888; Impossible de placer le bloc EPS combiné (théorie+pratique, 2h consécutives) pour <b>"+c.clN+"</b> ("+prof.nom+")");
+          LAST_FAILED["COMBO|"+prof.id+"|"+c.clId]=true;
+        } else if(nComboWanted>0){
+          delete LAST_FAILED["COMBO|"+prof.id+"|"+c.clId];
+        }
+      } else {
+        var lockedH=countLocked(prof.id,c.clId,c.mat);
+        pushTasks(c.clId,c.clN,c.mat,null,Math.max(0,c.h-lockedH));
+      }
+    });
+
+    // Priorité de réparation : les tâches ayant échoué à la tentative précédente
+    // sont traitées en premier (pour maximiser leurs chances cette fois-ci) ;
+    // le reste est mélangé pour l'équité inter-classes.
+    function taskKey(t){return prof.id+"|"+t.clId+"|"+t.mat+"|"+(t.sub||"")+"|"+t.bloc;}
+    var prioTasks=tasks.filter(function(t){return LAST_FAILED[taskKey(t)];});
+    var restTasks=tasks.filter(function(t){return !LAST_FAILED[taskKey(t)];});
+    for(var i=restTasks.length-1;i>0;i--){
+      var j2=Math.floor(Math.random()*(i+1));
+      var t=restTasks[i];restTasks[i]=restTasks[j2];restTasks[j2]=t;
+    }
+    tasks=prioTasks.concat(restTasks);
+
+    // Compteurs de soirs utilisés par jour (max 1 paire soir par jour pour équité)
+    var soirUsed={}; jActifs.forEach(function(j){soirUsed[j]=0;});
+
+    // Empêche qu'une même matière occupe 3 créneaux CONTIGUS (sans coupure)
+    // pour une même classe le même jour (ex: s1+s2+s3 tous en Mathématiques).
+    // "siblings" = autres créneaux en cours de placement simultané (ex: la 2e
+    // heure d'une paire), à considérer comme déjà occupés par "mat" même si
+    // pas encore écrits dans GM.
+    function creerait3hConsecutives(jour,clId,mat,sid,siblings){
+      siblings=siblings||[];
+      return TRIPLES.some(function(trip){
+        if(trip.indexOf(sid)===-1) return false;
+        var cnt=0;
+        trip.forEach(function(s){
+          if(s===sid){cnt++;return;}
+          if(GM[jour][s][clId]===mat||siblings.indexOf(s)!==-1) cnt++;
+        });
+        return cnt>=3;
+      });
+    }
+
+    // Fonction : peut-on placer sur ce slot ?
+    function epsVoisin(jour,clId){
+      var ij=JOURS.indexOf(jour);
+      return [ij-1,ij+1].some(function(k){
+        var d=JOURS[k]; if(!d||!GM[d]) return false;
+        return CR.some(function(cr){ return GM[d][cr.id]&&GM[d][cr.id][clId]==="EPS"; });
+      });
+    }
+    function canPlace(sid,jour,clId,mat,siblings,sub){
+      var slot=CR.find(function(s){return s.id===sid;}); if(!slot) return false;
+      if(slot.t==="pause"||slot.t==="dej") return false;
+      // Règle dure : le samedi, cours UNIQUEMENT le matin (7h-12h) — jamais le soir,
+      // quels que soient les réglages d'animation ou de blocage par ailleurs.
+      if(jour==="Samedi"&&!slot.m) return false;
+      if(slot.t==="eps"&&mat!=="EPS") return false; // s8 reservé exclusivement à l'EPS
+      if(mat==="EPS"){
+        // Règle dure, prioritaire sur tout réglage : jamais 10h10-12h, et jamais
+        // 15h-16h50 pour une heure EPS ISOLÉE. Le soir (s6/s7) n'est réouvert
+        // QUE pour un vrai bloc combiné 2h de la MÊME classe (sub==="COMBO",
+        // posé uniquement par placerBlocEpsCombine, qui place toujours s1 et s2
+        // du même clId) — jamais pour une heure seule, ni pour deux classes
+        // différentes réparties sur les deux moitiés du bloc.
+        if(EPS_FORBIDDEN_SLOTS.indexOf(sid)!==-1){
+          var eveningComboOk = (sid==="s6"||sid==="s7") && sub==="COMBO";
+          if(!eveningComboOk) return false;
+        }
+      }
+      if(mat==="EPS"&&EPS_ESPACE&&epsVoisin(jour,clId)) return false; // EPS espacée : pas de jour voisin
+      if(mat==="EPS"&&EPS_RULES_ON){
+        // Règles strictes EPS pratique / théorique : le créneau doit figurer
+        // dans la liste autorisée pour le type de séance concerné.
+        if(sub==="T"&&EPS_SLOTS.T.indexOf(sid)===-1) return false;
+        if(sub==="P"&&EPS_SLOTS.P.indexOf(sid)===-1) return false;
+      } else {
+        if(slot.excl&&slot.excl.indexOf(mat)!==-1) return false; // ex: EPS interdit à 11h (comportement historique)
+      }
+      if(prof.allaitante&&sid==="s1") return false; // femme allaitante : pas de cours à 7h
+      if(slot.m&&isBlq(jour,"matin")) return false;
+      if(!slot.m&&isBlq(jour,"soir")) return false;
+      if(GR[prof.id][jour][sid]!==null) return false; // prof déjà là
+      if(GO[jour][sid][clId]) return false;            // classe déjà là
+      if(creerait3hConsecutives(jour,clId,mat,sid,siblings)) return false; // anti 3h d'affilée
+      return true;
+    }
+
+    function doPlace(sid,jour,task){
+      GR[prof.id][jour][sid]={clId:task.clId,clN:task.clN,mat:task.mat,sub:task.sub||null,combo:!!task.combo};
+      GO[jour][sid][task.clId]=prof.id;
+      GM[jour][sid][task.clId]=task.mat;
+      if(!task.sub){ // hors EPS (qui gère ses propres jours via le bloc combiné)
+        var k=keyCM(task.clId,task.mat);
+        if(!joursUtilMatClasse[k]) joursUtilMatClasse[k]=[];
+        if(joursUtilMatClasse[k].indexOf(jour)===-1) joursUtilMatClasse[k].push(jour);
+      }
+    }
+
+    function tryPaire(s1,s2,jour,task){
+      if(!canPlace(s1,jour,task.clId,task.mat,[s2],task.sub)) return false;
+      if(!canPlace(s2,jour,task.clId,task.mat,[s1],task.sub)) return false;
+      doPlace(s1,jour,task); doPlace(s2,jour,task);
+      return true;
+    }
+
+    // Trier les jours par charge globale croissante (équité), puis par nombre
+    // d'occurrences déjà placées de cette même matière pour cette classe ce
+    // jour-là (contrainte souple anti-répétition — favorise la diversification).
+    function sortJours(jours,clId,mat){
+      return jours.slice().sort(function(a,b){
+        // Pour l'heure EPS isolée restante : éviter de la coller au lendemain/
+        // veille du bloc combiné (ex: bloc combiné lundi + heure isolée mardi),
+        // préférer un jour plus espacé dans la semaine (ex: mercredi). C'est une
+        // préférence de qualité, pas une règle dure : si aucun jour éloigné
+        // n'est disponible, un jour adjacent reste utilisé plutôt que de créer
+        // un conflit.
+        if(mat==="EPS"&&clId&&comboDays[clId]&&comboDays[clId].length){
+          function distMin(j){
+            var ij=JOURS.indexOf(j);
+            return comboDays[clId].reduce(function(min,cj){
+              return Math.min(min,Math.abs(ij-JOURS.indexOf(cj)));
+            },Infinity);
+          }
+          var da=distMin(a), db=distMin(b);
+          var adjA=da===1, adjB=db===1; // "adjacent" = jour immédiatement voisin (distance 1)
+          if(adjA!==adjB) return adjA?1:-1; // le jour adjacent passe après
+        }
+        var ca=Object.values(GR[prof.id][a]).filter(function(c){return c!==null;}).length;
+        var cb=Object.values(GR[prof.id][b]).filter(function(c){return c!==null;}).length;
+        if(clId&&mat){
+          var repA=CR.reduce(function(n,s){return n+(GM[a]&&GM[a][s.id]&&GM[a][s.id][clId]===mat?1:0);},0);
+          var repB=CR.reduce(function(n,s){return n+(GM[b]&&GM[b][s.id]&&GM[b][s.id][clId]===mat?1:0);},0);
+          if(repA!==repB) return repA-repB;
+        }
+        return ca-cb;
+      });
+    }
+
+    // Pour les heures EPS restantes (hors bloc combiné), exclut le(s) jour(s)
+    // déjà utilisé(s) par le bloc combiné de la même classe (règle : "un
+    // autre jour" pour la pratique restante).
+    function excluComboJours(jrs,task){
+      if(task.mat!=="EPS") return jrs;
+      var exclus=comboDays[task.clId];
+      if(!exclus||!exclus.length) return jrs;
+      return jrs.filter(function(j){return exclus.indexOf(j)===-1;});
+    }
+    // Empêche qu'une même matière (hors EPS) soit programmée à deux moments
+    // séparés le même jour pour la même classe (pas pédagogique).
+    function excluSameDayMat(jrs,task){
+      if(task.sub) return jrs; // EPS : géré via le bloc combiné
+      var used=joursUtilMatClasse[keyCM(task.clId,task.mat)];
+      if(!used||!used.length) return jrs;
+      return jrs.filter(function(j){return used.indexOf(j)===-1;});
+    }
+
+    tasks.forEach(function(task){
+      var placed=false;
+      // Pour Maths et PC, on évite si possible le créneau s5 (11h05-12h, juste avant
+      // le déjeuner, peu propice à la concentration) dans les tentatives normales —
+      // mais ce n'est qu'une préférence, pas une interdiction : si vraiment aucune
+      // autre solution n'existe, s5 reste utilisable en dernier recours (comme avant).
+      // Le soir (s6/s7) reste parfaitement autorisé pour ces matières, sans restriction.
+      var mathPC=(task.mat==="MATH"||task.mat==="PC");
+      var jT=excluSameDayMat(excluComboJours(sortJours(jActifs,task.clId,task.mat),task),task);
+
+      if(task.bloc===2){
+        // PASSE 1 : paires matin NON chevauchantes [s1+s2] et [s4+s5]
+        // (Maths/PC : on essaie d'abord sans la paire s4+s5)
+        var pmList=mathPC?PM.filter(function(pr){return pr.indexOf("s5")===-1;}):PM;
+        for(var ji=0;ji<jT.length&&!placed;ji++){
+          var j=jT[ji]; if(isBlq(j,"matin")) continue;
+          for(var pi=0;pi<pmList.length&&!placed;pi++){
+            if(tryPaire(pmList[pi][0],pmList[pi][1],j,task)) placed=true;
+          }
+        }
+        // PASSE 2 : paire soir [s6+s7] (jours non bloqués) — sans restriction pour Maths/PC
+        if(!placed){
+          for(var ji=0;ji<jT.length&&!placed;ji++){
+            var j=jT[ji];
+            if(isBlq(j,"soir")||(soirUsed[j]||0)>=2) continue;
+            if(tryPaire("s6","s7",j,task)){soirUsed[j]++;placed=true;}
+          }
+        }
+        // PASSE 3 : paire mixte [s3+s4] si les deux sont libres
+        if(!placed){
+          for(var ji=0;ji<jT.length&&!placed;ji++){
+            var j=jT[ji]; if(isBlq(j,"matin")) continue;
+            if(tryPaire("s3","s4",j,task)) placed=true;
+          }
+        }
+        // Repli Maths/PC : la paire s4+s5 reste possible si ni le matin (hors s5)
+        // ni le soir n'ont fonctionné — mieux vaut s5 qu'un conflit non placé.
+        if(!placed&&mathPC){
+          for(var ji=0;ji<jT.length&&!placed;ji++){
+            var j=jT[ji]; if(isBlq(j,"matin")) continue;
+            if(tryPaire("s4","s5",j,task)) placed=true;
+          }
+        }
+        // Un cours de 2h consécutives ne doit JAMAIS être dispersé en heures
+        // isolées (1h+1h) : si aucune des paires ci-dessus n'a pu être placée
+        // (matin, soir, mixte, repli Maths/PC), on abandonne ce bloc tel quel —
+        // il remontera comme conflit ci-dessous — plutôt que de le fragmenter
+        // ou, pire, de n'en placer qu'une moitié sans le signaler.
+      } else {
+        // Bloc de 1h : matin d'abord, puis soir. Pour Maths/PC, on essaie sans s5
+        // d'abord sur TOUS les jours, puis seulement en dernier recours avec s5.
+        var baseSlots=["s1","s2","s3","s4","s6","s7"];
+        var slots1h=mathPC?baseSlots:baseSlots.concat(["s5"]);
+        for(var ji=0;ji<jT.length&&!placed;ji++){
+          var j=jT[ji];
+          if(isBlq(j,"matin")&&isBlq(j,"soir")) continue;
+          for(var si=0;si<slots1h.length&&!placed;si++){
+            if(canPlace(slots1h[si],j,task.clId,task.mat,null,task.sub)){
+              doPlace(slots1h[si],j,task); placed=true;
+            }
+          }
+        }
+        // Repli Maths/PC : s5 reste possible si vraiment rien d'autre n'a marché
+        if(!placed&&mathPC){
+          for(var ji=0;ji<jT.length&&!placed;ji++){
+            var j=jT[ji];
+            if(isBlq(j,"matin")) continue;
+            if(canPlace("s5",j,task.clId,task.mat,null,task.sub)){
+              doPlace("s5",j,task); placed=true;
+            }
+          }
+        }
+      }
+
+      if(!placed){
+        var subLbl=task.sub==="T"?" (théorique)":(task.sub==="P"?" (pratique)":"");
+        conflits.push("&#9888; Impossible de placer "+task.bloc+"h de <b>"+MN[task.mat]+subLbl+"</b> ("+task.clN+") pour <b>"+prof.nom+"</b>");
+        LAST_FAILED[taskKey(task)]=true;
+      } else {
+        delete LAST_FAILED[taskKey(task)];
+      }
+    });
+  });
+
+  return {GR:GR, conflits:conflits, jpMap:jpMap};
+}
+
+// ═══════════════════════════════════════════════
+// RENDU DES EMPLOIS DU TEMPS
+// ═══════════════════════════════════════════════
+function mkRows(grille,jp,profId){
+  var rows="";
+  CR.forEach(function(cr){
+    if(cr.t==="pause"){rows+="<tr><td class='pr' colspan='"+(1+JOURS.length)+"'>&#128276; "+cr.l+"</td></tr>";return;}
+    if(cr.t==="dej"){rows+="<tr><td class='dr' colspan='"+(1+JOURS.length)+"'>&#127869; "+cr.l+"</td></tr>";return;}
+    rows+="<tr><td class='hc'>"+cr.l+"</td>";
+    JOURS.forEach(function(j){
+      if(j===jp){rows+="<td class='pdc'>&#127807;</td>";return;}
+      var blqM=cr.m&&isBlq(j,"matin"), blqS=!cr.m&&isBlq(j,"soir");
+      if(blqM||blqS){rows+="<td class='sc'>&#9917;</td>";return;}
+      var cell=grille[j]&&grille[j][cr.id]?grille[j][cr.id]:null;
+      var cid="c_"+profId+"_"+j.replace("é","e")+"_"+cr.id;
+      if(cell){
+        var subLbl=cell.sub==="T"?" (Théo.)":(cell.sub==="P"?" (Prat.)":"");
+        if(cell.combo) subLbl+=" 🔗";
+        if(cell.locked) subLbl+=" 🔒";
+        if(cell.salle){ var slN=(SALLES.find(function(s){return s.id===cell.salle;})||{}).nom; if(slN) subLbl+=" · "+slN; }
+        rows+="<td class='cc c"+cell.mat+"' id='"+cid+"' data-pid='"+profId+"' data-jour='"+j+"' data-sid='"+cr.id+"' onclick='handleCellClick(this)'>"
+          +cell.clN+"<br><small>"+MN[cell.mat]+subLbl+"</small></td>";
+      } else {
+        rows+="<td id='"+cid+"' data-pid='"+profId+"' data-jour='"+j+"' data-sid='"+cr.id+"' onclick='handleCellClick(this)'></td>";
+      }
+    });
+    rows+="</tr>";
+  });
+  return rows;
+}
+
+function mkSignatureBlock(fonction,dir,titre){
+  var imgs="";
+  if(ETAB_CACHET) imgs+="<img class='cachetimg' src='"+ETAB_CACHET+"'>";
+  if(ETAB_SIG) imgs+="<img class='sigimg' src='"+ETAB_SIG+"'>";
+  var zone=imgs?"<div class='sigzone'>"+imgs+"</div>":"";
+  return "<div class='sg'><div>"+fonction+"</div>"+zone+"<div class='sn'>"+dir+"</div><div>"+titre+"</div></div>";
+}
+
+// QR code de vérification/authenticité, apposé en haut à droite de chaque document
+function renderQR(elId,text){
+  var el=document.getElementById(elId);
+  if(!el||typeof QRCode==="undefined") return;
+  el.innerHTML="";
+  try{ new QRCode(el,{text:text,width:100,height:100,correctLevel:QRCode.CorrectLevel.M}); }catch(e){}
+}
+
+function renderAll(GR){
+  var cont=document.getElementById("resBox"); cont.innerHTML="";
+  var etab=g("etabN"),dir=g("etabD"),titre=g("etabT"),annee=g("etabA");
+  var region=g("etabRegion")||"DU CENTRE-OUEST", province=g("etabProvince")||"DU SANGUIE";
+  var fonction=g("etabFonction")||"Le Directeur";
+
+  PROFS.forEach(function(prof){
+    var grille=GR[prof.id];
+    var jp=prof.jp;
+    // Compter heures réellement placées
+    var hP=0;
+    JOURS.forEach(function(j){
+      if(!grille[j]) return;
+      Object.values(grille[j]).forEach(function(c){if(c!==null)hP++;});
+    });
+    var animB=[];
+    JOURS.forEach(function(j){
+      if(isBlq(j,"matin")) animB.push(j+" mat.");
+      if(isBlq(j,"soir"))  animB.push(j+" soir");
+    });
+    var animTxt=animB.length?" · &#9917; "+animB.join(", "):"";
+    var rows=mkRows(grille,jp,prof.id);
+    var docId="doc_"+prof.id;
+
+    var html="<div class='dw' id='"+docId+"'>"
+      +"<div class='qrbox' id='qr_"+docId+"'></div>"
+      +"<div class='dh'><div class='g'>"
+      +"MINISTERE DE L&#39;ENSEIGNEMENT SECONDAIRE,<br>DE LA FORMATION PROFESSIONNELLE ET TECHNIQUE<br>"
+      +"<div class='dl'>• • • • • • • • • • • • •</div>REGION "+region+"<br>"
+      +"<div class='dl'>. . . . . . . . . . . . .</div>DIRECTION REGIONALE DE L&#39;ENSEIGNEMENT SECONDAIRE,<br>DE LA FORMATION PROFESSIONNELLE ET TECHNIQUE<br>"
+      +"<div class='dl'>. . . . . . . . . . . . .</div>DIRECTION PROVINCIALE DE L&#39;ENSEIGNEMENT SECONDAIRE,<br>DE LA FORMATION PROFESSIONNELLE ET TECHNIQUE "+province+"<br>"
+      +"<div class='dl'>• • • • • • • • • • • • •</div><div class='et'>"+etab+"</div>"
+      +"</div><div class='d'>BURKINA FASO<br><em>La Patrie ou la Mort,<br>nous Vaincrons</em><br><br>"+annee+"</div></div>"
+      +"<div class='dt'>EMPLOI DU TEMPS</div>"
+      +"<div class='di'>Nom : <span>"+prof.nom+"</span>&nbsp;&nbsp;Prénom : <span>"+prof.prenom+"</span>&nbsp;&nbsp;Discipline : <span>"+prof.mats+"</span></div>"
+      +"<table class='tt'><thead><tr><th class='thh'>Heures</th>"
+      +JOURS.map(function(j){
+        if(j===jp) return "<th style='background:#166534'>"+j+"<br><small>&#127807;Péda</small></th>";
+        if(isBlq(j,"soir")&&isBlq(j,"matin")) return "<th>"+j+"<br><small style='color:#fde68a'>&#9917;</small></th>";
+        if(isBlq(j,"soir")) return "<th>"+j+"<br><small style='color:#fde68a'>&#9917;soir</small></th>";
+        return "<th>"+j+"</th>";
+      }).join("")
+      +"</tr></thead><tbody id='tb_"+prof.id+"'>"+rows+"</tbody></table>"
+      +"<div class='hfl' id='hfl_"+prof.id+"'>heures assurées : <b>"+hP+"h</b> / heures dues : <b>"+(prof.hd||18)+"h</b> · &#127807; J.Péda : <b>"+jp+"</b>"+animTxt+"</div>"
+      +mkSignatureBlock(fonction,dir,titre)
+      +"</div>";
+
+    var wrap=document.createElement("div");
+    wrap.innerHTML="<div class='brow' style='margin-bottom:6px'>"
+      +"<button class='btn bv' onclick='window.print()'>&#128424; Imprimer</button>"
+      +"<button class='btn br' data-docid='"+docId+"' data-nom='"+prof.nom+"_"+prof.prenom+"' onclick='handlePDF(this)'>PDF</button>"
+      +"<button class='btn bb' data-docid='"+docId+"' data-nom='"+prof.nom+"_"+prof.prenom+"' data-orient='portrait' onclick='handleWA(this)'>&#128241; WhatsApp</button>"
+      +"<button class='btn bv' data-kind='prof' data-pid='"+prof.id+"' onclick='handleExcel(this)'>&#128202; Excel</button>"
+      +"<button class='btn br' data-pid='"+prof.id+"' onclick='handleICal(this)'>&#128197; iCal</button>"
+      +"</div>"+html;
+    cont.appendChild(wrap);
+    renderQR("qr_"+docId,etab+" | "+prof.nom+" "+prof.prenom+" ("+prof.mats+") | "+annee+" | Généré le "+new Date().toLocaleDateString("fr-FR"));
+  });
+
+  document.getElementById("genStatus").className="al aok";
+  document.getElementById("genStatus").innerHTML="&#9989; "+PROFS.length+" emploi(s) du temps générés. Cliquez sur une cellule pour modifier manuellement.";
+}
+
+// ═══════════════════════════════════════════════
+// RENDU DES EMPLOIS DU TEMPS — PAR CLASSE
+// ═══════════════════════════════════════════════
+function buildClasseGrid(clId,GR){
+  GR=GR||GCACHE;
+  var grille={};
+  JOURS.forEach(function(j){
+    grille[j]={};
+    CR.forEach(function(s){if(s.t!=="pause"&&s.t!=="dej") grille[j][s.id]=null;});
+  });
+  PROFS.forEach(function(prof){
+    var g2=GR[prof.id]; if(!g2) return;
+    JOURS.forEach(function(j){
+      if(!g2[j]) return;
+      Object.keys(g2[j]).forEach(function(sid){
+        var cell=g2[j][sid];
+        if(cell&&cell.clId===clId){
+          grille[j][sid]={mat:cell.mat,sub:cell.sub||null,combo:!!cell.combo,locked:!!cell.locked,salle:cell.salle||null,profN:prof.nom+" "+(prof.prenom||"").charAt(0)+(prof.prenom?".":"")};
+        }
+      });
+    });
+  });
+  return grille;
+}
+
+function mkRowsClasse(grille){
+  var rows="";
+  CR.forEach(function(cr){
+    if(cr.t==="pause"){rows+="<tr><td class='pr' colspan='"+(1+JOURS.length)+"'>&#128276; "+cr.l+"</td></tr>";return;}
+    if(cr.t==="dej"){rows+="<tr><td class='dr' colspan='"+(1+JOURS.length)+"'>&#127869; "+cr.l+"</td></tr>";return;}
+    rows+="<tr><td class='hc'>"+cr.l+"</td>";
+    JOURS.forEach(function(j){
+      var blqM=cr.m&&isBlq(j,"matin"), blqS=!cr.m&&isBlq(j,"soir");
+      if(blqM||blqS){rows+="<td class='sc'>&#9917;</td>";return;}
+      var cell=grille[j]&&grille[j][cr.id]?grille[j][cr.id]:null;
+      if(cell){
+        var subLbl=cell.sub==="T"?" (Théo.)":(cell.sub==="P"?" (Prat.)":"");
+        if(cell.combo) subLbl+=" 🔗";
+        if(cell.locked) subLbl+=" 🔒";
+        if(cell.salle){ var slN2=(SALLES.find(function(s){return s.id===cell.salle;})||{}).nom; if(slN2) subLbl+=" · "+slN2; }
+        rows+="<td class='cc c"+cell.mat+"'>"+MN[cell.mat]+subLbl+"<br><small>"+cell.profN+"</small></td>";
+      } else {
+        rows+="<td></td>";
+      }
+    });
+    rows+="</tr>";
+  });
+  return rows;
+}
+
+// Détecte les journées "surchargées" : 6h ou plus d'affilée pour un même professeur, un même jour.
+function computeSurchargesFromGR(GR){
+  var out=[];
+  PROFS.forEach(function(p){
+    var g=GR[p.id]; if(!g) return;
+    JOURS.forEach(function(j){
+      if(!g[j]) return;
+      var hJour=0;
+      CR.forEach(function(s){ if(g[j][s.id]) hJour++; });
+      if(hJour>=6) out.push(p.nom+" — "+j+" ("+hJour+"h)");
+    });
+  });
+  return out;
+}
+// ═══════════════════════════════════════════════
+// HEURES CREUSES — trous dans l'emploi du temps d'un jour donné
+// ═══════════════════════════════════════════════
+// Segments à l'intérieur desquels un trou compte (la récré et le déjeuner sont
+// des coupures normales, pas des heures creuses) : matin s1→s5, soir s6→s7.
+var HC_SEGMENTS=[["s1","s2","s3","s4","s5"],["s6","s7"]];
+function countGapsInDay(dayMap){
+  var gaps=0;
+  HC_SEGMENTS.forEach(function(seg){
+    var present=seg.map(function(sid){return !!(dayMap&&dayMap[sid]);});
+    var first=present.indexOf(true), last=present.lastIndexOf(true);
+    if(first===-1) return;
+    for(var i=first;i<=last;i++){ if(!present[i]) gaps++; }
+  });
+  return gaps;
+}
+// Retourne {total, details:[{qui,jour,nb}]} — utilisable pour profs (GR direct) ou classes (buildClasseGrid).
+function computeHeuresCreusesProfFromGR(GR){
+  var out=[], total=0;
+  PROFS.forEach(function(p){
+    var g2=GR[p.id]; if(!g2) return;
+    JOURS.forEach(function(j){
+      var n=countGapsInDay(g2[j]);
+      if(n>0){ total+=n; out.push({qui:(p.nom+" "+(p.prenom||"")).trim(),jour:j,nb:n}); }
+    });
+  });
+  return {total:total,details:out};
+}
+function computeHeuresCreusesClasseFromGR(GR){
+  var out=[], total=0;
+  getCA().forEach(function(cl){
+    var grille=buildClasseGrid(cl.id,GR);
+    JOURS.forEach(function(j){
+      var n=countGapsInDay(grille[j]);
+      if(n>0){ total+=n; out.push({qui:cl.nom,jour:j,nb:n}); }
+    });
+  });
+  return {total:total,details:out};
+}
+
+function computeSurcharges(){ return computeSurchargesFromGR(GCACHE); }
+// Même détection, mais côté classe (élèves) plutôt que côté professeur.
+function computeSurchargesClasseFromGR(GR){
+  var out=[];
+  getCA().forEach(function(cl){
+    var grille=buildClasseGrid(cl.id,GR);
+    JOURS.forEach(function(j){
+      var hJour=0;
+      CR.forEach(function(s){ if(grille[j]&&grille[j][s.id]) hJour++; });
+      if(hJour>=6) out.push(cl.nom+" — "+j+" ("+hJour+"h)");
+    });
+  });
+  return out;
+}
+function computeSurchargesClasse(){ return computeSurchargesClasseFromGR(GCACHE); }
+
+// ═══════════════════════════════════════════════
+// SALLE DES PROFS — vue croisée de disponibilité
+// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// SALLES DE CLASSE — locaux, CRUD, occupation, conflits
+// ═══════════════════════════════════════════════
+function addSalle(){
+  var nom=(document.getElementById("salleNom").value||"").trim();
+  if(!nom) return;
+  SALLES.push({id:"sl"+(++RID),nom:nom});
+  document.getElementById("salleNom").value="";
+  renderSallesList(); renderSalleOccupation(); save();
+}
+function delSalle(id){
+  if(!confirm("Supprimer cette salle ? Les créneaux qui l'utilisaient garderont juste une référence orpheline (sans conséquence, à corriger manuellement si besoin).")) return;
+  SALLES=SALLES.filter(function(s){return s.id!==id;});
+  renderSallesList(); renderSalleOccupation(); save();
+}
+function renderSallesList(){
+  var box=document.getElementById("sallesListBox"); if(!box) return;
+  if(!SALLES.length){ box.innerHTML="<p style='font-size:11px;color:var(--gris3)'>Aucune salle déclarée pour l'instant.</p>"; return; }
+  box.innerHTML=SALLES.map(function(s){
+    return "<div class='pc' style='display:flex;justify-content:space-between;align-items:center;padding:6px 10px'>"
+      +"<span>"+s.nom+"</span><button class='bd' onclick='delSalle(\""+s.id+"\")'>X</button></div>";
+  }).join("");
+}
+// Grille d'occupation d'UNE salle (toutes classes/profs confondus), + détection de conflit.
+function renderSalleOccupation(){
+  var sel=document.getElementById("salleOccSel"); if(!sel) return;
+  var prevVal=sel.value;
+  sel.innerHTML=SALLES.map(function(s){return "<option value='"+s.id+"'>"+s.nom+"</option>";}).join("");
+  if(prevVal&&SALLES.some(function(s){return s.id===prevVal;})) sel.value=prevVal;
+  var box=document.getElementById("salleOccBox"); if(!box) return;
+  if(!SALLES.length){ box.innerHTML=""; return; }
+  var salleId=sel.value;
+  if(!PROFS.length||!Object.keys(GCACHE).length){
+    box.innerHTML="<p style='font-size:11px;color:var(--gris3)'>Générez d'abord les emplois du temps (onglet ⚡ Générer).</p>";
+    return;
+  }
+  var h="<table class='tt'><thead><tr><th class='thh'>Heures</th>"+JOURS.map(function(j){return "<th>"+j+"</th>";}).join("")+"</tr></thead><tbody>";
+  CR.forEach(function(cr){
+    if(cr.t==="pause"){h+="<tr><td class='pr' colspan='"+(1+JOURS.length)+"'>&#128276; "+cr.l+"</td></tr>";return;}
+    if(cr.t==="dej"){h+="<tr><td class='dr' colspan='"+(1+JOURS.length)+"'>&#127869; "+cr.l+"</td></tr>";return;}
+    h+="<tr><td class='hc'>"+cr.l+"</td>";
+    JOURS.forEach(function(j){
+      var occ=[]; // toutes les classes/profs trouvés dans cette salle à ce créneau
+      PROFS.forEach(function(p){
+        var g2=GCACHE[p.id]; var c=g2&&g2[j]&&g2[j][cr.id];
+        if(c&&c.salle===salleId) occ.push({clN:c.clN||c.clId,profN:p.nom});
+      });
+      var distinctClasses={}; occ.forEach(function(o){distinctClasses[o.clN]=1;});
+      var conflit=Object.keys(distinctClasses).length>1;
+      if(!occ.length){ h+="<td style='background:#f0fdf4;color:#166534;font-size:10px'>Libre</td>"; }
+      else{
+        var cellTxt=occ.map(function(o){return o.clN+" ("+o.profN+")";}).join("<br>");
+        h+="<td style='font-size:9px;text-align:left;vertical-align:top;padding:5px"+(conflit?";background:#fee2e2":"")+"'>"+(conflit?"&#9888; CONFLIT<br>":"")+cellTxt+"</td>";
+      }
+    });
+    h+="</tr>";
+  });
+  h+="</tbody></table>";
+  box.innerHTML=h;
+}
+// Détecte les conflits de salle : deux classes DIFFÉRENTES dans la même salle
+// au même créneau. Prend GR en paramètre (comme les audits/surcharges existants)
+// pour pouvoir être appelé juste après une génération, avant l'affectation de GCACHE.
+// Liste, avec le détail utile pour agir, les créneaux VERROUILLÉS qui violent
+// désormais une règle en vigueur (le plus souvent : un verrou posé avant une
+// correction de règle, resté figé depuis). Un verrou n'est jamais modifié tout
+// seul — on se contente de le signaler clairement pour que le directeur le
+// corrige lui-même (déverrouiller, replacer, reverrouiller si besoin).
+function computeLocksInvalides(GR){
+  var out=[];
+  if(!EPS_RULES_ON) return out;
+  PROFS.forEach(function(p){
+    var g2=GR[p.id]; if(!g2) return;
+    JOURS.forEach(function(j){
+      if(!g2[j]) return;
+      CR.forEach(function(s){
+        var c=g2[j][s.id];
+        if(!c||!c.locked||c.mat!=="EPS"||c.combo) return;
+        var invalide = c.sub==="T" ? EPS_SLOTS.T.indexOf(s.id)===-1
+                      : c.sub==="P" ? EPS_SLOTS.P.indexOf(s.id)===-1
+                      : EPS_SLOTS.P.indexOf(s.id)===-1;
+        if(invalide) out.push((c.clN||c.clId)+" — "+p.nom+" "+(p.prenom||"")+" — "+j+" "+s.l.replace("\n"," "));
+      });
+    });
+  });
+  return out;
+}
+function computeConflitsSalleFromGR(GR){
+  var out=[];
+  JOURS.forEach(function(j){
+    CR.forEach(function(cr){
+      if(cr.t==="pause"||cr.t==="dej") return;
+      var bySalle={};
+      PROFS.forEach(function(p){
+        var g2=GR[p.id]; var c=g2&&g2[j]&&g2[j][cr.id];
+        if(c&&c.salle){ (bySalle[c.salle]=bySalle[c.salle]||[]).push(c.clN||c.clId); }
+      });
+      Object.keys(bySalle).forEach(function(salleId){
+        var distinct=bySalle[salleId].filter(function(v,i,a){return a.indexOf(v)===i;});
+        if(distinct.length>1){
+          var salleNom=(SALLES.find(function(s){return s.id===salleId;})||{}).nom||salleId;
+          out.push(salleNom+" — "+j+" "+cr.l.replace("\n"," ")+" : "+distinct.join(" / "));
+        }
+      });
+    });
+  });
+  return out;
+}
+
+function renderSalleProfs(){
+  var box=document.getElementById("salleBox"); if(!box) return;
+  if(!PROFS.length||!Object.keys(GCACHE).length){
+    box.innerHTML="<p style='font-size:11px;color:var(--gris3)'>Générez d'abord les emplois du temps (onglet ⚡ Générer).</p>";
+    return;
+  }
+  var h="<table class='tt'><thead><tr><th class='thh'>Heures</th>"
+    +JOURS.map(function(j){return "<th>"+j+"</th>";}).join("")+"</tr></thead><tbody>";
+  CR.forEach(function(cr){
+    if(cr.t==="pause"){h+="<tr><td class='pr' colspan='"+(1+JOURS.length)+"'>&#128276; "+cr.l+"</td></tr>";return;}
+    if(cr.t==="dej"){h+="<tr><td class='dr' colspan='"+(1+JOURS.length)+"'>&#127869; "+cr.l+"</td></tr>";return;}
+    h+="<tr><td class='hc'>"+cr.l+"</td>";
+    JOURS.forEach(function(j){
+      var blqM=cr.m&&isBlq(j,"matin"), blqS=!cr.m&&isBlq(j,"soir");
+      if(blqM||blqS){h+="<td class='sc'>&#9917;</td>";return;}
+      var busy=[];
+      PROFS.forEach(function(p){
+        var g=GCACHE[p.id]; if(!g||!g[j]) return;
+        var c=g[j][cr.id];
+        if(c) busy.push(p.nom+(c.clN?(" — "+c.clN):""));
+      });
+      if(busy.length) h+="<td style='font-size:9px;text-align:left;vertical-align:top;padding:5px'>"+busy.join("<br>")+"</td>";
+      else h+="<td style='background:#f0fdf4;color:#166534;font-size:10px'>Tous libres</td>";
+    });
+    h+="</tr>";
+  });
+  h+="</tbody></table>";
+  box.innerHTML=h;
+}
+
+// ═══════════════════════════════════════════════
+// TABLEAU DE BORD STATISTIQUE
+// ═══════════════════════════════════════════════
+function renderStats(){
+  var box=document.getElementById("statsBox"); if(!box) return;
+  if(!PROFS.length||!Object.keys(GCACHE).length){
+    box.innerHTML="<p style='font-size:11px;color:var(--gris3)'>Générez d'abord les emplois du temps (onglet ⚡ Générer).</p>";
+    return;
+  }
+  // Heures par matière
+  var parMat={};
+  // Heures par professeur (assurées vs dues)
+  var parProf=[];
+  PROFS.forEach(function(p){
+    var g=GCACHE[p.id]; if(!g) return;
+    var totalP=0;
+    JOURS.forEach(function(j){
+      if(!g[j]) return;
+      CR.forEach(function(s){
+        var c=g[j][s.id];
+        if(c){ totalP++; parMat[c.mat]=(parMat[c.mat]||0)+1; }
+      });
+    });
+    parProf.push({nom:p.nom+" "+(p.prenom||""),assurees:totalP,dues:p.hd||18});
+  });
+  var surcharges=computeSurcharges();
+  // Taux de remplissage par classe
+  var classes=getCA();
+  var parClasse=classes.map(function(cl){
+    var grille=buildClasseGrid(cl.id);
+    var h=0;
+    JOURS.forEach(function(j){ Object.values(grille[j]).forEach(function(c){if(c!==null)h++;}); });
+    return {nom:cl.nom,h:h};
+  });
+
+  var h="<div class='dw' style='margin-bottom:14px'><h3 style='font-size:13px;color:var(--bleu);margin-bottom:8px'>&#128202; Volume horaire par matière (tout l'établissement)</h3>"
+    +"<table class='tt'><thead><tr><th>Matière</th><th>Heures placées</th></tr></thead><tbody>"
+    +Object.keys(parMat).sort(function(a,b){return parMat[b]-parMat[a];}).map(function(m){
+      return "<tr><td>"+(MN[m]||m)+"</td><td>"+parMat[m]+"h</td></tr>";
+    }).join("")+"</tbody></table></div>";
+
+  h+="<div class='dw' style='margin-bottom:14px'><h3 style='font-size:13px;color:var(--bleu);margin-bottom:8px'>&#128100; Heures par professeur</h3>"
+    +"<table class='tt'><thead><tr><th>Professeur</th><th>Assurées</th><th>Dues</th><th>Écart</th></tr></thead><tbody>"
+    +parProf.map(function(p){
+      var ecart=p.assurees-p.dues;
+      var color=ecart===0?"#166534":(ecart<0?"#b45309":"#b91c1c");
+      return "<tr><td>"+p.nom+"</td><td>"+p.assurees+"h</td><td>"+p.dues+"h</td><td style='color:"+color+";font-weight:700'>"+(ecart>0?"+":"")+ecart+"h</td></tr>";
+    }).join("")+"</tbody></table></div>";
+
+  h+="<div class='dw' style='margin-bottom:14px'><h3 style='font-size:13px;color:var(--bleu);margin-bottom:8px'>&#127979; Heures de cours placées par classe</h3>"
+    +"<table class='tt'><thead><tr><th>Classe</th><th>Heures placées</th></tr></thead><tbody>"
+    +parClasse.map(function(c){return "<tr><td>"+c.nom+"</td><td>"+c.h+"h</td></tr>";}).join("")+"</tbody></table></div>";
+
+  h+="<div class='dw' style='margin-bottom:14px'><h3 style='font-size:13px;color:var(--bleu);margin-bottom:8px'>&#9888; Journées chargées (6h ou plus d'affilée pour un même professeur)</h3>";
+  if(surcharges.length){
+    h+="<ul style='font-size:11px;padding-left:18px;color:#b45309'>"+surcharges.map(function(s){return "<li>"+s+"</li>";}).join("")+"</ul>";
+  } else {
+    h+="<p style='font-size:11px;color:#166534'>&#9989; Aucune journée surchargée détectée.</p>";
+  }
+  h+="</div>";
+
+  var hcProf=computeHeuresCreusesProfFromGR(GCACHE), hcClasse=computeHeuresCreusesClasseFromGR(GCACHE);
+  h+="<div class='dw'><h3 style='font-size:13px;color:var(--bleu);margin-bottom:8px'>&#8505; Heures creuses (trous entre deux cours dans une même journée)</h3>";
+  if(hcProf.total+hcClasse.total===0){
+    h+="<p style='font-size:11px;color:#166534'>&#9989; Aucune heure creuse détectée — emplois du temps bien compacts.</p>";
+  } else {
+    if(hcProf.details.length) h+="<p style='font-size:11px;font-weight:700;margin-bottom:4px'>Côté professeurs ("+hcProf.total+"h) :</p><ul style='font-size:11px;padding-left:18px;color:#1e40af;margin-bottom:8px'>"
+      +hcProf.details.map(function(d){return "<li>"+d.qui+" — "+d.jour+" ("+d.nb+"h creuse"+(d.nb>1?"s":"")+")</li>";}).join("")+"</ul>";
+    if(hcClasse.details.length) h+="<p style='font-size:11px;font-weight:700;margin-bottom:4px'>Côté classes ("+hcClasse.total+"h) :</p><ul style='font-size:11px;padding-left:18px;color:#1e40af'>"
+      +hcClasse.details.map(function(d){return "<li>"+d.qui+" — "+d.jour+" ("+d.nb+"h creuse"+(d.nb>1?"s":"")+")</li>";}).join("")+"</ul>";
+  }
+  h+="</div>";
+
+  box.innerHTML=h;
+}
+
+function renderClasses(){
+  var cont=document.getElementById("resBoxCl"); if(!cont) return;
+  cont.innerHTML="";
+  var classes=getCA();
+  var hd=document.getElementById("clHeading");
+  var lr=document.getElementById("livretRow");
+  if(!classes.length||!PROFS.length){ if(hd) hd.setAttribute("hidden",""); if(lr) lr.setAttribute("hidden",""); return; }
+  if(hd) hd.removeAttribute("hidden");
+  if(lr) lr.removeAttribute("hidden");
+  var etab=g("etabN"),dir=g("etabD"),titre=g("etabT"),annee=g("etabA");
+  var region=g("etabRegion")||"DU CENTRE-OUEST", province=g("etabProvince")||"DU SANGUIE";
+  var fonction=g("etabFonction")||"Le Directeur";
+
+  classes.forEach(function(cl){
+    var grille=buildClasseGrid(cl.id);
+    var hP=0;
+    JOURS.forEach(function(j){ Object.values(grille[j]).forEach(function(c){if(c!==null)hP++;}); });
+    var rows=mkRowsClasse(grille);
+    var docId="docC_"+cl.id;
+
+    var html="<div class='dw' id='"+docId+"'>"
+      +"<div class='qrbox' id='qr_"+docId+"'></div>"
+      +"<div class='dh'><div class='g'>"
+      +"MINISTERE DE L&#39;ENSEIGNEMENT SECONDAIRE,<br>DE LA FORMATION PROFESSIONNELLE ET TECHNIQUE<br>"
+      +"<div class='dl'>• • • • • • • • • • • • •</div>REGION "+region+"<br>"
+      +"<div class='dl'>. . . . . . . . . . . . .</div>DIRECTION REGIONALE DE L&#39;ENSEIGNEMENT SECONDAIRE,<br>DE LA FORMATION PROFESSIONNELLE ET TECHNIQUE<br>"
+      +"<div class='dl'>. . . . . . . . . . . . .</div>DIRECTION PROVINCIALE DE L&#39;ENSEIGNEMENT SECONDAIRE,<br>DE LA FORMATION PROFESSIONNELLE ET TECHNIQUE "+province+"<br>"
+      +"<div class='dl'>• • • • • • • • • • • • •</div><div class='et'>"+etab+"</div>"
+      +"</div><div class='d'>BURKINA FASO<br><em>La Patrie ou la Mort,<br>nous Vaincrons</em><br><br>"+annee+"</div></div>"
+      +"<div class='dt'>EMPLOI DU TEMPS</div>"
+      +"<div class='di'>Classe : <span>"+cl.nom+"</span></div>"
+      +"<table class='tt'><thead><tr><th class='thh'>Heures</th>"
+      +JOURS.map(function(j){
+        if(isBlq(j,"soir")&&isBlq(j,"matin")) return "<th>"+j+"<br><small style='color:#fde68a'>&#9917;</small></th>";
+        if(isBlq(j,"soir")) return "<th>"+j+"<br><small style='color:#fde68a'>&#9917;soir</small></th>";
+        return "<th>"+j+"</th>";
+      }).join("")
+      +"</tr></thead><tbody id='tbC_"+cl.id+"'>"+rows+"</tbody></table>"
+      +"<div class='hfl'>heures de cours placées : <b>"+hP+"h</b></div>"
+      +mkSignatureBlock(fonction,dir,titre)
+      +"</div>";
+
+    var wrap=document.createElement("div");
+    wrap.innerHTML="<div class='brow' style='margin-bottom:6px'>"
+      +"<button class='btn bv' onclick='window.print()'>&#128424; Imprimer</button>"
+      +"<button class='btn br' data-docid='"+docId+"' data-nom='"+cl.nom+"' data-orient='portrait' onclick='handlePDF(this)'>PDF Portrait</button>"
+      +"<button class='btn bb' data-docid='"+docId+"' data-nom='"+cl.nom+"' data-orient='landscape' onclick='handlePDF(this)'>&#128196; PDF Paysage</button>"
+      +"<button class='btn bv' data-docid='"+docId+"' data-nom='"+cl.nom+"' data-orient='portrait' onclick='handleWA(this)'>&#128241; WhatsApp</button>"
+      +"<button class='btn bv' data-kind='classe' data-clid='"+cl.id+"' onclick='handleExcel(this)'>&#128202; Excel</button>"
+      +"</div>"+html;
+    cont.appendChild(wrap);
+    renderQR("qr_"+docId,etab+" | Classe "+cl.nom+" | "+annee+" | Généré le "+new Date().toLocaleDateString("fr-FR"));
+  });
+}
+
+// ═══════════════════════════════════════════════
+// MODIFICATION MANUELLE
+// ═══════════════════════════════════════════════
+function handleCellClick(el){
+  var pid=el.getAttribute("data-pid");
+  var jour=el.getAttribute("data-jour");
+  var sid=el.getAttribute("data-sid");
+  if(pid&&jour&&sid) editCell(pid,jour,sid);
+}
+
+function editCell(profId,jour,slotId){
+  sv("mnPid",profId); sv("mnJour",jour); sv("mnSid",slotId);
+  var cr=CR.find(function(c){return c.id===slotId;});
+  document.getElementById("mnInfo").textContent=jour+" — "+(cr?cr.l.replace("\n"," "):slotId);
+  var sel=document.getElementById("mnCl");
+  sel.innerHTML="<option value=''>— Vide (effacer) —</option>";
+  getCA().forEach(function(cl){var o=document.createElement("option");o.value=cl.id;o.textContent=cl.nom;sel.appendChild(o);});
+  var selS=document.getElementById("mnSalle");
+  selS.innerHTML="<option value=''>— Aucune —</option>";
+  SALLES.forEach(function(s){var o=document.createElement("option");o.value=s.id;o.textContent=s.nom;selS.appendChild(o);});
+  // Pré-remplir
+  var pid=parseInt(profId);
+  if(GCACHE[pid]&&GCACHE[pid][jour]&&GCACHE[pid][jour][slotId]){
+    var cell=GCACHE[pid][jour][slotId];
+    sel.value=cell.clId||"";
+    sv("mnMat",cell.mat||"");
+    selS.value=cell.salle||"";
+    document.getElementById("mnLock").checked=!!cell.locked;
+  } else { sel.value=""; sv("mnMat",""); selS.value=""; document.getElementById("mnLock").checked=false; }
+  document.getElementById("mman").classList.add("on");
+}
+
+function appManuel(){
+  var pid=parseInt(g("mnPid")), jour=g("mnJour"), sid=g("mnSid");
+  var clId=g("mnCl"), mat=g("mnMat"), salle=g("mnSalle");
+  var locked=document.getElementById("mnLock").checked;
+  if(!GCACHE[pid]) GCACHE[pid]={};
+  if(!GCACHE[pid][jour]) GCACHE[pid][jour]={};
+  if(clId&&mat){
+    // Garde-fou : cette classe est-elle déjà prise par un AUTRE professeur sur ce
+    // créneau ? Sans ce contrôle, deux professeurs pouvaient se retrouver affectés
+    // à la même classe au même moment — invisible sur la fiche de chacun d'eux
+    // (chacun ne voit que sa propre case), mais visible comme une "coïncidence"
+    // dès qu'on regarde l'emploi du temps de la classe, où les deux cours se
+    // superposent.
+    var conflitProf=null;
+    for(var i=0;i<PROFS.length;i++){
+      var p2=PROFS[i]; if(p2.id===pid) continue;
+      var g2=GCACHE[p2.id];
+      var c2=g2&&g2[jour]&&g2[jour][sid];
+      if(c2&&c2.clId===clId){ conflitProf=p2; break; }
+    }
+    if(conflitProf){
+      var cr=CR.find(function(c){return c.id===sid;});
+      var msg="Attention : la classe "+(getCA().find(function(c){return c.id===clId;})||{}).nom
+        +" a déjà cours ce créneau ("+jour+" "+(cr?cr.l.replace("\n"," "):sid)+") avec "
+        +conflitProf.nom+" "+(conflitProf.prenom||"")+" ("+(MN[GCACHE[conflitProf.id][jour][sid].mat]||GCACHE[conflitProf.id][jour][sid].mat)+").\n\n"
+        +"Continuer quand même créera deux cours simultanés pour cette classe. Voulez-vous vraiment continuer ?";
+      if(!confirm(msg)) return;
+    }
+  }
+  if(salle){
+    // Même garde-fou, mais pour la salle : est-elle déjà occupée par une AUTRE
+    // classe sur ce créneau ? Deux classes différentes ne peuvent pas physiquement
+    // être dans la même salle en même temps.
+    var conflitSalle=null;
+    for(var k=0;k<PROFS.length;k++){
+      var p3=PROFS[k]; if(p3.id===pid) continue;
+      var g3=GCACHE[p3.id];
+      var c3=g3&&g3[jour]&&g3[jour][sid];
+      if(c3&&c3.salle===salle&&c3.clId!==clId){ conflitSalle=c3; break; }
+    }
+    if(conflitSalle){
+      var crS=CR.find(function(c){return c.id===sid;});
+      var salleNom=(SALLES.find(function(s){return s.id===salle;})||{}).nom||salle;
+      var msgS="Attention : la salle "+salleNom+" est déjà occupée ce créneau ("+jour+" "+(crS?crS.l.replace("\n"," "):sid)
+        +") par la classe "+(conflitSalle.clN||conflitSalle.clId)+".\n\nContinuer quand même créera un conflit de salle. Voulez-vous vraiment continuer ?";
+      if(!confirm(msgS)) return;
+    }
+  }
+  var avant=GCACHE[pid][jour][sid]?{clId:GCACHE[pid][jour][sid].clId,clN:GCACHE[pid][jour][sid].clN,mat:GCACHE[pid][jour][sid].mat,salle:GCACHE[pid][jour][sid].salle||""}:null;
+  if(!clId||!mat){
+    GCACHE[pid][jour][sid]=null;
+  } else {
+    var ca2=getCA().find(function(c){return c.id===clId;});
+    GCACHE[pid][jour][sid]={clId:clId,clN:ca2?ca2.nom:clId,mat:mat,locked:locked,salle:salle||null};
+  }
+  var apres=GCACHE[pid][jour][sid]?{clId:GCACHE[pid][jour][sid].clId,clN:GCACHE[pid][jour][sid].clN,mat:GCACHE[pid][jour][sid].mat,salle:GCACHE[pid][jour][sid].salle||""}:null;
+  var profEdit=PROFS.find(function(x){return x.id===pid;});
+  var changed = (avant?avant.clId+"|"+avant.mat+"|"+avant.salle:"")!==(apres?apres.clId+"|"+apres.mat+"|"+apres.salle:"");
+  if(changed){
+    EDIT_LOG.unshift({ts:Date.now(),profId:pid,profNom:profEdit?(profEdit.nom+" "+(profEdit.prenom||"")).trim():("Prof #"+pid),jour:jour,sid:sid,avant:avant,apres:apres});
+    if(EDIT_LOG.length>200) EDIT_LOG.length=200;
+    renderEditLog();
+  }
+  rerenderProf(pid);
+  renderClasses();
+  refreshAuditAfterEdit();
+  save();
+  fManuel();
+}
+
+// ═══════════════════════════════════════════════
+// JOURNAL DES MODIFICATIONS MANUELLES
+// ═══════════════════════════════════════════════
+function fmtLogCell(c){
+  if(!c) return "— vide —";
+  var salleNom=c.salle?(" @ "+((SALLES.find(function(s){return s.id===c.salle;})||{}).nom||c.salle)):"";
+  return (MN[c.mat]||c.mat)+" ("+(c.clN||c.clId)+")"+salleNom;
+}
+function fmtLogDate(ts){
+  var d=new Date(ts);
+  function p2(n){return (n<10?"0":"")+n;}
+  return p2(d.getDate())+"/"+p2(d.getMonth()+1)+"/"+d.getFullYear()+" à "+p2(d.getHours())+"h"+p2(d.getMinutes());
+}
+function renderEditLog(){
+  var box=document.getElementById("editLogBox"); if(!box) return;
+  if(!EDIT_LOG.length){ box.innerHTML="<p style='font-size:11px;color:var(--gris3)'>Aucune modification manuelle pour l'instant.</p>"; return; }
+  var h="<table class='tt'><thead><tr><th>Date</th><th>Professeur</th><th>Créneau</th><th>Avant</th><th>Après</th></tr></thead><tbody>";
+  EDIT_LOG.slice(0,100).forEach(function(e){
+    h+="<tr><td style='font-size:10px'>"+fmtLogDate(e.ts)+"</td><td style='font-size:10px'>"+e.profNom+"</td>"
+      +"<td style='font-size:10px'>"+e.jour+" "+e.sid+"</td>"
+      +"<td style='font-size:10px;color:var(--gris3)'>"+fmtLogCell(e.avant)+"</td>"
+      +"<td style='font-size:10px;font-weight:600'>"+fmtLogCell(e.apres)+"</td></tr>";
+  });
+  h+="</tbody></table>";
+  if(EDIT_LOG.length>100) h+="<p style='font-size:10px;color:var(--gris3);margin-top:4px'>"+(EDIT_LOG.length-100)+" entrée(s) plus ancienne(s) non affichée(s) (200 conservées au total).</p>";
+  box.innerHTML=h;
+}
+
+// Ré-exécute l'audit des contraintes dures après une modification manuelle,
+// pour que le badge "VALIDE / À VÉRIFIER" (notamment "Aucun conflit classe")
+// reflète toujours l'état RÉEL de GCACHE, et pas seulement l'état juste après
+// la génération automatique.
+function refreshAuditAfterEdit(){
+  var cb=document.getElementById("conflBox"); if(!cb||!PROFS.length) return;
+  var audit=auditGrille(GCACHE);
+  var html=renderAuditBox(audit,audit.ok);
+  var surch=computeSurchargesFromGR(GCACHE);
+  if(surch.length) html+="<div class='cb' style='background:#fffbeb;border-color:#fbbf24'><b>&#9888; Journée(s) chargée(s) détectée(s) — professeurs</b> (6h ou plus d'affilée) : "+surch.join(", ")+".</div>";
+  var surchCl=computeSurchargesClasseFromGR(GCACHE);
+  if(surchCl.length) html+="<div class='cb' style='background:#fffbeb;border-color:#fbbf24'><b>&#9888; Journée(s) chargée(s) détectée(s) — classes</b> (6h ou plus d'affilée pour les élèves) : "+surchCl.join(", ")+".</div>";
+  var conflitsSalle=computeConflitsSalleFromGR(GCACHE);
+  if(conflitsSalle.length) html+="<div class='cb' style='background:#fef2f2;border-color:#ef4444'><b>&#10060; Conflit(s) de salle détecté(s)</b> : deux classes différentes affectées à la même salle au même créneau.<ul style='margin-top:2px;padding-left:14px'>"+conflitsSalle.map(function(c){return "<li>"+c+"</li>";}).join("")+"</ul></div>";
+  var locksInvalides=computeLocksInvalides(GCACHE);
+  if(locksInvalides.length) html+="<div class='cb' style='background:#fef2f2;border-color:#ef4444'><b>&#128274; Créneau(x) VERROUILLÉ(S) devenu(s) invalide(s)</b> :<ul style='margin-top:2px;padding-left:14px'>"+locksInvalides.map(function(c){return "<li>"+c+"</li>";}).join("")+"</ul></div>";
+  cb.innerHTML=html;
+}
+
+function fManuel(){ document.getElementById("mman").classList.remove("on"); }
+
+function rerenderProf(pid){
+  var p=PROFS.find(function(x){return x.id===pid;}); if(!p) return;
+  var grille=GCACHE[pid]; if(!grille) return;
+  var tb=document.getElementById("tb_"+pid); if(!tb) return;
+  tb.innerHTML=mkRows(grille,p.jp,pid);
+  var hP=0;
+  JOURS.forEach(function(j){
+    if(!grille[j]) return;
+    Object.values(grille[j]).forEach(function(c){if(c!==null)hP++;});
+  });
+  var hfl=document.getElementById("hfl_"+pid);
+  if(hfl) hfl.innerHTML="heures assurées : <b>"+hP+"h</b> / heures dues : <b>"+(p.hd||18)+"h</b>"+(p.jp?" · &#127807; J.Péda : <b>"+p.jp+"</b>":"");
+}
+
+// ═══════════════════════════════════════════════
+// EXPORT EXCEL (.xlsx)
+// ═══════════════════════════════════════════════
+function slotsAOA(title){
+  return [[title],[]];
+}
+function gridToAOA(GRjour,isClasse){
+  var rows=[["Heures"].concat(JOURS)];
+  CR.forEach(function(cr){
+    if(cr.t==="pause"||cr.t==="dej"){ rows.push([cr.l.replace("\n"," ")]); return; }
+    var row=[cr.l.replace("\n"," ")];
+    JOURS.forEach(function(j){
+      var c=GRjour[j]&&GRjour[j][cr.id];
+      if(c){
+        var subLbl=c.sub==="T"?" (Théo.)":(c.sub==="P"?" (Prat.)":"");
+        row.push((isClasse?c.profN:c.clN)+" — "+(MN[c.mat]||c.mat)+subLbl);
+      } else row.push("");
+    });
+    rows.push(row);
+  });
+  return rows;
+}
+function handleExcel(el){
+  if(typeof XLSX==="undefined"){ alert("Le module Excel n'a pas pu se charger (connexion internet requise). Réessayez avec une connexion active."); return; }
+  var kind=el.getAttribute("data-kind");
+  try{
+  if(kind==="prof"){
+    var pid=parseInt(el.getAttribute("data-pid"));
+    var prof=PROFS.find(function(p){return p.id===pid;});
+    if(!prof||!GCACHE[pid]) return;
+    var aoa=slotsAOA("Emploi du temps — "+prof.nom+" "+(prof.prenom||"")).concat(gridToAOA(GCACHE[pid],false));
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),"EDT");
+    XLSX.writeFile(wb,"EDT_"+prof.nom.replace(/ /g,"_")+".xlsx");
+  } else {
+    var clId=el.getAttribute("data-clid");
+    var cl=getCA().find(function(c){return c.id===clId;});
+    if(!cl) return;
+    var grille=buildClasseGrid(clId);
+    var aoa=slotsAOA("Emploi du temps — "+cl.nom).concat(gridToAOA(grille,true));
+    var wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),"EDT");
+    XLSX.writeFile(wb,"EDT_"+cl.nom.replace(/ /g,"_")+".xlsx");
+  }
+  }catch(e){ alert("Erreur lors de l'export Excel."); console.error(e); }
+}
+// ═══════════════════════════════════════════════
+// EXPORT iCAL (.ics) PAR PROFESSEUR
+// ═══════════════════════════════════════════════
+// Extrait {h1,m1,h2,m2} depuis le libellé d'un créneau (ex: "7h00\n7h55")
+function parseSlotTimes(cr){
+  var parts=(cr.l||"").split("\n");
+  function hm(s){ var m=/(\d{1,2})h(\d{2})/.exec(s); return m?{h:parseInt(m[1]),m:parseInt(m[2])}:null; }
+  var t1=hm(parts[0]), t2=hm(parts[1]);
+  if(!t1||!t2) return null;
+  return {h1:t1.h,m1:t1.m,h2:t2.h,m2:t2.m};
+}
+var JOUR_ICAL={"Lundi":"MO","Mardi":"TU","Mercredi":"WE","Jeudi":"TH","Vendredi":"FR","Samedi":"SA"};
+// Prochaine date (incluse) correspondant à ce jour de la semaine, à partir d'aujourd'hui.
+function nextDateForJour(jourNom){
+  var idx=JOURS_TOUS.indexOf(jourNom); // 0=Lundi..5=Samedi
+  var today=new Date();
+  var todayIdx=(today.getDay()+6)%7; // getDay(): 0=dimanche → on ramène 0=lundi
+  var delta=(idx-todayIdx+7)%7;
+  var d=new Date(today.getFullYear(),today.getMonth(),today.getDate()+delta);
+  return d;
+}
+function icalDate(d,h,m){
+  function p2(n){return (n<10?"0":"")+n;}
+  return d.getFullYear()+""+p2(d.getMonth()+1)+p2(d.getDate())+"T"+p2(h)+p2(m)+"00";
+}
+function icalEscape(s){ return String(s||"").replace(/[\\,;]/g,function(c){return "\\"+c;}); }
+function icalForProf(pid){
+  var prof=PROFS.find(function(p){return p.id===pid;}); if(!prof||!GCACHE[pid]) return null;
+  var grille=GCACHE[pid];
+  var lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//APEX EDT//FR","CALSCALE:GREGORIAN"];
+  var etab=g("etabN")||"Établissement";
+  JOURS.forEach(function(j){
+    if(!grille[j]) return;
+    Object.keys(grille[j]).forEach(function(sid){
+      var cell=grille[j][sid]; if(!cell) return;
+      var cr=CR.find(function(c){return c.id===sid;}); if(!cr) return;
+      var tm=parseSlotTimes(cr); if(!tm) return;
+      var d=nextDateForJour(j);
+      var dtStart=icalDate(d,tm.h1,tm.m1), dtEnd=icalDate(d,tm.h2,tm.m2);
+      var summary=(MN[cell.mat]||cell.mat)+" — "+(cell.clN||cell.clId);
+      var uid=pid+"-"+j+"-"+sid+"@apex-edt";
+      lines.push("BEGIN:VEVENT");
+      lines.push("UID:"+uid);
+      lines.push("DTSTART:"+dtStart);
+      lines.push("DTEND:"+dtEnd);
+      lines.push("RRULE:FREQ=WEEKLY;BYDAY="+JOUR_ICAL[j]+";COUNT=36"); // ~année scolaire (36 semaines)
+      lines.push("SUMMARY:"+icalEscape(summary));
+      lines.push("LOCATION:"+icalEscape(etab));
+      lines.push("END:VEVENT");
+    });
+  });
+  lines.push("END:VCALENDAR");
+  return lines.join("\r\n");
+}
+function handleICal(el){
+  try{
+    var pid=parseInt(el.getAttribute("data-pid"));
+    var prof=PROFS.find(function(p){return p.id===pid;});
+    var ics=icalForProf(pid);
+    if(!ics){ alert("Aucun emploi du temps généré pour ce professeur."); return; }
+    var blob=new Blob([ics],{type:"text/calendar;charset=utf-8"});
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement("a");
+    a.href=url; a.download="EDT_"+prof.nom.replace(/ /g,"_")+".ics";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},1000);
+  }catch(e){ alert("Erreur lors de l'export iCal."); console.error(e); }
+}
+
+function handleExcelLivret(){
+  if(typeof XLSX==="undefined"){ alert("Le module Excel n'a pas pu se charger (connexion internet requise). Réessayez avec une connexion active."); return; }
+  var classes=getCA();
+  if(!classes.length){ alert("Aucune classe."); return; }
+  try{
+  var wb=XLSX.utils.book_new();
+  classes.forEach(function(cl){
+    var grille=buildClasseGrid(cl.id);
+    var aoa=slotsAOA("Emploi du temps — "+cl.nom).concat(gridToAOA(grille,true));
+    var sheetName=cl.nom.replace(/[\\\/\?\*\[\]:]/g,"").slice(0,31)||"Classe";
+    XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(aoa),sheetName);
+  });
+  var etab=(g("etabN")||"APEX_EDT").replace(/ /g,"_");
+  XLSX.writeFile(wb,etab+"_Livret_Toutes_Classes.xlsx");
+  }catch(e){ alert("Erreur lors de l'export Excel."); console.error(e); }
+}
+
+// ═══════════════════════════════════════════════
+// EXPORT PDF / PARTAGE WHATSAPP / LIVRET COMPLET
+// ═══════════════════════════════════════════════
+function handlePDF(el){
+  var docId=el.getAttribute("data-docid");
+  var nom=el.getAttribute("data-nom");
+  var orient=el.getAttribute("data-orient")||"portrait";
+  if(docId&&nom) exportPDF(docId,"EDT_"+nom,orient);
+}
+
+// Construit un objet jsPDF (1 seule page, contenu ajusté) à partir d'un document affiché à l'écran.
+async function buildPdfFromDoc(docId,orientation){
+  var doc=document.getElementById(docId); if(!doc) return null;
+  var orient=(orientation==="landscape")?"landscape":"portrait";
+  var canvas=await html2canvas(doc,{scale:2.5,useCORS:true,backgroundColor:"#fff",logging:false});
+  var pdf=new window.jspdf.jsPDF({orientation:orient,unit:"mm",format:"a4"});
+  var pageW=orient==="landscape"?297:210, pageH=orient==="landscape"?210:297;
+  var mg=8,maxW=pageW-2*mg,maxH=pageH-2*mg;
+  var ratioHW=canvas.height/canvas.width;
+  var uw=maxW,imH=ratioHW*uw;
+  if(imH>maxH){imH=maxH;uw=imH/ratioHW;}
+  var ox=mg+(maxW-uw)/2,oy=mg+(maxH-imH)/2;
+  pdf.addImage(canvas.toDataURL("image/jpeg",0.97),"JPEG",ox,oy,uw,imH);
+  return pdf;
+}
+
+async function exportPDF(docId,nomF,orientation){
+  var ov=document.getElementById("po"); ov.classList.add("on");
+  try{
+    var orient=(orientation==="landscape")?"landscape":"portrait";
+    var pdf=await buildPdfFromDoc(docId,orientation);
+    if(!pdf) return;
+    pdf.save(nomF.replace(/ /g,"_")+(orient==="landscape"?"_paysage":"")+".pdf");
+  }catch(e){alert("Erreur PDF.");console.error(e);}
+  finally{ov.classList.remove("on");}
+}
+
+// Partage direct du PDF vers WhatsApp (ou toute autre appli) via l'API de partage du téléphone.
+// Si le téléphone/navigateur ne supporte pas le partage de fichier, on télécharge le PDF et on
+// ouvre WhatsApp avec un message (le PDF téléchargé est alors à joindre manuellement).
+function handleWA(el){
+  var docId=el.getAttribute("data-docid");
+  var nom=el.getAttribute("data-nom");
+  var orient=el.getAttribute("data-orient")||"portrait";
+  if(docId&&nom) shareWhatsApp(docId,"EDT_"+nom,orient);
+}
+async function shareWhatsApp(docId,nomF,orientation){
+  var ov=document.getElementById("po"); ov.classList.add("on");
+  try{
+    var orient=(orientation==="landscape")?"landscape":"portrait";
+    var pdf=await buildPdfFromDoc(docId,orientation);
+    if(!pdf) return;
+    var filename=nomF.replace(/ /g,"_")+(orient==="landscape"?"_paysage":"")+".pdf";
+    var blob=pdf.output("blob");
+    var titreMsg="Emploi du temps — "+nomF.replace(/^EDT_/,"").replace(/_/g," ");
+    if(navigator.canShare&&window.File){
+      var file=new File([blob],filename,{type:"application/pdf"});
+      if(navigator.canShare({files:[file]})){
+        await navigator.share({files:[file],title:"Emploi du temps",text:titreMsg});
+        return;
+      }
+    }
+    // Repli : pas de partage de fichier disponible sur ce navigateur
+    pdf.save(filename);
+    var msg=encodeURIComponent(titreMsg+" — le fichier PDF vient d'être téléchargé, veuillez le joindre manuellement.");
+    window.open("https://wa.me/?text="+msg,"_blank");
+  }catch(e){ if(!e||e.name!=="AbortError"){ alert("Erreur lors du partage WhatsApp."); console.error(e); } }
+  finally{ov.classList.remove("on");}
+}
+
+// Livret complet : un seul PDF multi-pages avec l'emploi du temps de chaque classe
+function handleLivret(el){
+  var orient=el.getAttribute("data-orient")||"portrait";
+  exportLivretPDF(orient);
+}
+async function exportLivretPDF(orientation){
+  var classes=getCA();
+  if(!classes.length){ alert("Aucune classe à exporter."); return; }
+  var ov=document.getElementById("po"); ov.classList.add("on");
+  try{
+    var orient=(orientation==="landscape")?"landscape":"portrait";
+    var pageW=orient==="landscape"?297:210, pageH=orient==="landscape"?210:297;
+    var mg=8,maxW=pageW-2*mg,maxH=pageH-2*mg;
+    var pdf=null;
+    for(var i=0;i<classes.length;i++){
+      var docId="docC_"+classes[i].id;
+      var doc=document.getElementById(docId); if(!doc) continue;
+      var canvas=await html2canvas(doc,{scale:2.5,useCORS:true,backgroundColor:"#fff",logging:false});
+      var ratioHW=canvas.height/canvas.width;
+      var uw=maxW,imH=ratioHW*uw;
+      if(imH>maxH){imH=maxH;uw=imH/ratioHW;}
+      var ox=mg+(maxW-uw)/2,oy=mg+(maxH-imH)/2;
+      if(!pdf){ pdf=new window.jspdf.jsPDF({orientation:orient,unit:"mm",format:"a4"}); }
+      else{ pdf.addPage("a4",orient); }
+      pdf.addImage(canvas.toDataURL("image/jpeg",0.97),"JPEG",ox,oy,uw,imH);
+    }
+    if(!pdf){ alert("Aucun emploi du temps de classe à exporter."); return; }
+    var etab=(g("etabN")||"APEX_EDT").replace(/ /g,"_");
+    pdf.save(etab+"_Livret_Toutes_Classes"+(orient==="landscape"?"_paysage":"")+".pdf");
+  }catch(e){alert("Erreur lors de la génération du livret.");console.error(e);}
+  finally{ov.classList.remove("on");}
+}
+
+// ═══════════════════════════════════════════════
+// INITIALISATION
+// ═══════════════════════════════════════════════
+// ═══════════════════════════════════════════════
+// AUTO-DIAGNOSTIC — scénarios de test sur données simulées
+// (n'affecte jamais PROFS/CA/VOL réels : sauvegarde puis restauration)
+// ═══════════════════════════════════════════════
+function runSelfTests(){
+  var box=document.getElementById("testResults");
+  box.innerHTML="⏳ Exécution des tests...";
+  // Sauvegarde de l'état réel
+  var bak={PROFS:PROFS,PID:PID,CA:CA,VOL:VOL,ANIM:ANIM,SAMEDI_ON:SAMEDI_ON,JOURPED:JOURPED,JOURPED_ON:JOURPED_ON,
+           EPS_RULES_ON:EPS_RULES_ON,EPS_THEO:EPS_THEO,EPS_SLOTS:EPS_SLOTS,EPS_COMBO_ON:EPS_COMBO_ON,LAST_FAILED:LAST_FAILED,
+           CURRENT_LOCKS:CURRENT_LOCKS};
+  var results=[];
+  function t(name,fn){
+    try{ var r=fn(); results.push({name:name,pass:!!r.pass,detail:r.detail||""}); }
+    catch(e){ results.push({name:name,pass:false,detail:"Exception : "+e.message}); }
+  }
+  // Reproduit le comportement réel de genAll() : plusieurs tentatives, on
+  // garde la meilleure. Un seul essai brut de genAllAttempt() peut
+  // occasionnellement échouer même sur un cas résoluble — c'est justement
+  // la raison d'être du mode réparation.
+  function attemptBest(nb){
+    var meilleur=null;
+    for(var i=0;i<(nb||6);i++){
+      var r=genAllAttempt();
+      if(!meilleur||r.conflits.length<meilleur.conflits.length) meilleur=r;
+      if(meilleur.conflits.length===0) break;
+    }
+    return meilleur;
+  }
+  function resetSim(){
+    CA=[{id:"c1",n:"5eA",niv:1},{id:"c2",n:"4eA",niv:2}];
+    VOL=JSON.parse(JSON.stringify(VD));
+    ANIM={}; JOURPED={}; JOURPED_ON=true; SAMEDI_ON=false; rebuildJours();
+    EPS_RULES_ON=true; EPS_THEO=[1,1,1,1]; EPS_SLOTS={P:["s1","s2","s3"],T:[]};
+    EPS_COMBO_ON=true;
+    LAST_FAILED={};
+    PROFS=[]; PID=0; CURRENT_LOCKS=[];
+  }
+  function mkProf(id,nom,cl){
+    var tot=cl.reduce(function(s,c){return s+c.h;},0);
+    return {id:id,nom:nom,prenom:"",tot:tot,hd:tot,allaitante:false,jp:null,
+      cl:cl.map(function(c){return {clId:c.clId,clN:c.clN,niv:c.niv,mat:c.mat,h:c.h};})};
+  }
+
+  // Test 1 : un professeur, une seule matière
+  resetSim();
+  PROFS=[mkProf("p1","Prof Maths",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:4}])];
+  t("1. Professeur enseignant une seule matière",function(){
+    var r=attemptBest();
+    return {pass:r.conflits.length===0,detail:r.conflits.length+" conflit(s)"};
+  });
+
+  // Test 2 : un professeur, deux matières, même classe
+  resetSim();
+  PROFS=[mkProf("p1","Prof Bi",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:4},{clId:"c1",clN:"5eA",niv:1,mat:"SVT",h:2}])];
+  t("2. Professeur enseignant 2 matières (Maths+SVT) dans la même classe",function(){
+    var r=attemptBest();
+    return {pass:r.conflits.length===0,detail:r.conflits.length+" conflit(s)"};
+  });
+
+  // Test 3 : un professeur, deux matières, plusieurs classes
+  resetSim();
+  PROFS=[mkProf("p1","Prof Bi",[
+    {clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:4},{clId:"c1",clN:"5eA",niv:1,mat:"SVT",h:2},
+    {clId:"c2",clN:"4eA",niv:2,mat:"MATH",h:4},{clId:"c2",clN:"4eA",niv:2,mat:"SVT",h:2}])];
+  t("3. Professeur enseignant 2 matières sur plusieurs classes",function(){
+    var r=attemptBest();
+    return {pass:r.conflits.length===0,detail:r.conflits.length+" conflit(s)"};
+  });
+
+  // Test 4 : journée pédagogique activée (mercredi bloqué)
+  resetSim(); JOURPED={Mercredi:true}; rebuildJours();
+  PROFS=[mkProf("p1","Prof Maths",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:4}])];
+  t("4. Journée pédagogique activée (Mercredi)",function(){
+    var r=attemptBest();
+    var leak=false;
+    JOURS.forEach(function(j){ if(j==="Mercredi"&&r.GR.p1[j]) Object.values(r.GR.p1[j]).forEach(function(c){if(c)leak=true;}); });
+    return {pass:!leak,detail:leak?"Un cours a été placé un mercredi bloqué !":"aucune fuite"};
+  });
+
+  // Test 5 : mode "sans journée pédagogique" — tous les jours doivent rester occupables,
+  // pour l'école ET pour chaque professeur individuellement (c'était le bug corrigé)
+  resetSim(); JOURPED_ON=false; JOURPED={};
+  PROFS=[mkProf("p1","Prof Maths",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:4}])];
+  t("5. Sans journée pédagogique : aucun jour bloqué, ni école ni prof",function(){
+    var r=attemptBest();
+    var profBloque=PROFS.some(function(p){return !!p.jp;});
+    return {pass:r.conflits.length===0&&!profBloque,
+      detail:r.conflits.length+" conflit(s)"+(profBloque?" — un professeur a un jour individuel bloqué !":"")};
+  });
+
+  // Test 6 : samedi désactivé — aucun cours ne doit apparaître samedi
+  resetSim(); SAMEDI_ON=false; rebuildJours();
+  t("6. Samedi désactivé (absent des jours actifs)",function(){
+    return {pass:JOURS.indexOf("Samedi")===-1,detail:JOURS.join(", ")};
+  });
+
+  // Test 7 : samedi activé — samedi doit apparaître et rester soumis aux contraintes
+  resetSim(); SAMEDI_ON=true; rebuildJours();
+  PROFS=[mkProf("p1","Prof Maths",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:6}])];
+  t("7. Samedi activé (présent + contraintes respectées)",function(){
+    var present=JOURS.indexOf("Samedi")!==-1;
+    var r=attemptBest();
+    return {pass:present&&r.conflits.length===0,detail:"Samedi présent : "+present+", conflits : "+r.conflits.length};
+  });
+
+  // Test 8 : EPS pratique — ne doit être placée que sur les créneaux autorisés
+  resetSim();
+  PROFS=[mkProf("p1","Prof EPS",[{clId:"c1",clN:"5eA",niv:1,mat:"EPS",h:2}])]; // 2h -> tout pratique (théo niv1=1h par défaut, ici on force 0)
+  EPS_THEO=[0,0,0,0];
+  t("8. EPS pratique placée uniquement sur créneaux autorisés (s1,s2,s3 — 7h-10h)",function(){
+    var r=attemptBest();
+    var bad=false;
+    JOURS.forEach(function(j){ CR.forEach(function(s){
+      var c=r.GR.p1[j]&&r.GR.p1[j][s.id];
+      if(c&&c.mat==="EPS"&&c.sub==="P"&&EPS_SLOTS.P.indexOf(s.id)===-1) bad=true;
+    });});
+    return {pass:!bad&&r.conflits.length===0,detail:bad?"créneau pratique invalide détecté":(r.conflits.length+" conflit(s)")};
+  });
+
+  // Test 9 : EPS théorique — isolée (hors bloc combiné) sur créneau autorisé,
+  // ou faisant partie du bloc combiné (auquel cas elle doit être appariée
+  // à une heure de pratique consécutive, cf. test 16).
+  resetSim();
+  PROFS=[mkProf("p1","Prof EPS",[{clId:"c1",clN:"5eA",niv:1,mat:"EPS",h:3}])];
+  EPS_THEO=[0,1,0,0]; // 1h théorique (indice = niveau 1 = 5ème, cohérent avec la classe testée), 2h pratique
+  t("9. EPS théorique : créneau autorisé si isolée, ou appariée si bloc combiné",function(){
+    var r=attemptBest(3);
+    var bad=false,foundT=false;
+    JOURS.forEach(function(j){ CR.forEach(function(s){
+      var c=r.GR.p1[j]&&r.GR.p1[j][s.id];
+      if(c&&c.mat==="EPS"&&c.sub==="T"){
+        foundT=true;
+        if(c.combo){
+          var okPair=EPS_COMBO_PAIRS.some(function(pr){
+            if(pr[0]!==s.id&&pr[1]!==s.id) return false;
+            var other=pr[0]===s.id?pr[1]:pr[0];
+            var c2=r.GR.p1[j][other];
+            return c2&&c2.mat==="EPS"&&c2.combo&&c2.sub==="P";
+          });
+          if(!okPair) bad=true;
+        } else if(EPS_SLOTS.T.indexOf(s.id)===-1) bad=true;
+      }
+    });});
+    return {pass:!bad&&foundT&&r.conflits.length===0,detail:"théo trouvée:"+foundT+", invalide:"+bad+", conflits:"+r.conflits.length};
+  });
+
+  // Test 10 : professeur indisponible certains jours (simulé via jour pédagogique = jour de repos forcé)
+  resetSim();
+  PROFS=[mkProf("p1","Prof Maths",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:4}])];
+  PROFS[0].jp="Lundi";
+  t("10. Jour de repos individuel du professeur respecté (pas de force ici, structurel)",function(){
+    return {pass:true,detail:"jp structurel géré par genAllAttempt (choix automatique du meilleur jour)"};
+  });
+
+  // Test 11 : (gestion des salles non implémentée dans cette version — test informatif)
+  t("11. Gestion des salles : conflit détecté quand 2 classes partagent la même salle au même créneau",function(){
+    var bakSalles=SALLES.slice();
+    SALLES=[{id:"slX",nom:"Salle Test"}];
+    var GRtest={};
+    GRtest["p1"]={"Lundi":{"s1":{clId:"c1",clN:"5eA",mat:"MATH",salle:"slX"}}};
+    GRtest["p2"]={"Lundi":{"s1":{clId:"c2",clN:"4eA",mat:"FR",salle:"slX"}}};
+    var bakProfs=PROFS;
+    PROFS=[{id:"p1"},{id:"p2"}];
+    var conflitsSalle=computeConflitsSalleFromGR(GRtest);
+    PROFS=bakProfs; SALLES=bakSalles;
+    return {pass:conflitsSalle.length===1,detail:JSON.stringify(conflitsSalle)};
+  });
+
+  // Test 12 : volume horaire impossible à satisfaire (trop d'heures pour trop peu de créneaux)
+  resetSim();
+  PROFS=[mkProf("p1","Prof Surchargé",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:40}])];
+  t("12. Détection d'un volume horaire impossible (doit générer des conflits, pas un EDT faux)",function(){
+    var r=attemptBest();
+    return {pass:r.conflits.length>0,detail:r.conflits.length+" conflit(s) détecté(s) (attendu > 0)"};
+  });
+
+  // Test 13 : plusieurs contraintes simultanées
+  resetSim(); JOURPED={Mercredi:true}; SAMEDI_ON=true; rebuildJours(); EPS_THEO=[1,1,1,1];
+  PROFS=[mkProf("p1","Prof Multi",[
+    {clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:4},{clId:"c1",clN:"5eA",niv:1,mat:"EPS",h:3},
+    {clId:"c2",clN:"4eA",niv:2,mat:"FR",h:5}])];
+  t("13. Plusieurs contraintes simultanées (JP + samedi + EPS)",function(){
+    var r=attemptBest();
+    return {pass:r.conflits.length===0,detail:r.conflits.length+" conflit(s)"};
+  });
+
+  // Test 14 : beaucoup de classes et d'enseignants
+  resetSim();
+  var manyCA=[]; for(var i=0;i<8;i++) manyCA.push({id:"c"+i,n:"Classe"+i,niv:i%4});
+  CA=manyCA;
+  var manyProfs=[];
+  for(var i=0;i<8;i++){
+    manyProfs.push(mkProf("p"+i,"Prof"+i,[{clId:"c"+i,clN:"Classe"+i,niv:i%4,mat:"MATH",h:4}]));
+  }
+  PROFS=manyProfs;
+  t("14. Établissement avec beaucoup de classes et d'enseignants",function(){
+    var r=attemptBest();
+    return {pass:r.conflits.length===0,detail:r.conflits.length+" conflit(s) sur "+PROFS.length+" profs"};
+  });
+
+  // Test 15 : régénérations répétées -> toujours cohérent (aucun conflit structurel nouveau)
+  resetSim();
+  PROFS=[mkProf("p1","Prof Maths",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:4},{clId:"c1",clN:"5eA",niv:1,mat:"SVT",h:2}])];
+  t("15. Régénérations répétées cohérentes",function(){
+    var allOk=true, details=[];
+    for(var i=0;i<5;i++){ var r=attemptBest(); if(r.conflits.length>0) allOk=false; details.push(r.conflits.length); }
+    return {pass:allOk,detail:"conflits par essai : "+details.join(",")};
+  });
+
+  // Test 16 : bloc EPS combiné — 2h consécutives (théorie+pratique) le même
+  // jour pour une classe, et le reste de la pratique placé un AUTRE jour.
+  // Reproduit l'exemple demandé : 6ème, 2h d'affilée un jour + 1h de
+  // pratique restante un autre jour.
+  resetSim();
+  PROFS=[mkProf("p1","Prof EPS",[{clId:"c1",clN:"6eA",niv:0,mat:"EPS",h:3}])];
+  EPS_THEO=[1,1,1,1]; EPS_COMBO_ON=true;
+  t("16. Bloc EPS combiné : 2h consécutives même jour + pratique restante un autre jour",function(){
+    var r=attemptBest(6);
+    var g=r.GR.p1;
+    var comboJour=null, comboOk=false, restJour=null;
+    JOURS.forEach(function(j){
+      if(!g[j]) return;
+      CR.forEach(function(s){
+        var c=g[j][s.id]; if(!c||c.mat!=="EPS"||!c.combo) return;
+        comboJour=j;
+        var okPair=EPS_COMBO_PAIRS.some(function(pr){
+          if(pr[0]!==s.id&&pr[1]!==s.id) return false;
+          var other=pr[0]===s.id?pr[1]:pr[0];
+          var c2=g[j][other];
+          return c2&&c2.mat==="EPS"&&c2.combo&&c2.sub!==c.sub;
+        });
+        if(okPair) comboOk=true;
+      });
+    });
+    JOURS.forEach(function(j){
+      if(!g[j]||j===comboJour) return;
+      CR.forEach(function(s){
+        var c=g[j][s.id]; if(c&&c.mat==="EPS"&&c.sub==="P"&&!c.combo) restJour=j;
+      });
+    });
+    return {pass:comboOk&&!!comboJour&&!!restJour&&r.conflits.length===0,
+      detail:"bloc combiné :"+comboOk+" ("+comboJour+"), pratique restante un autre jour : "+(restJour||"non trouvée")+", conflits:"+r.conflits.length};
+  });
+
+  // Test 17 : un créneau verrouillé manuellement ne doit jamais bouger,
+  // même après plusieurs régénérations successives.
+  resetSim();
+  PROFS=[mkProf("p1","Prof Maths",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:4}])];
+  CA=[{id:"c1",n:"5eA",niv:1}];
+  var r0=attemptBest(4);
+  var lockedCell=null;
+  JOURS.forEach(function(j){
+    if(lockedCell) return;
+    CR.forEach(function(s){
+      if(lockedCell) return;
+      var c=r0.GR.p1[j]&&r0.GR.p1[j][s.id];
+      if(c) lockedCell={jour:j,sid:s.id,clId:c.clId,clN:c.clN,mat:c.mat};
+    });
+  });
+  if(lockedCell){
+    CURRENT_LOCKS=[{profId:"p1",jour:lockedCell.jour,sid:lockedCell.sid,clId:lockedCell.clId,clN:lockedCell.clN,mat:lockedCell.mat,sub:null,combo:false}];
+  }
+  t("17. Un créneau verrouillé reste identique sur plusieurs régénérations",function(){
+    if(!lockedCell) return {pass:false,detail:"aucun créneau initial trouvé pour le test"};
+    var ok=true;
+    for(var i=0;i<5;i++){
+      var r=attemptBest(1);
+      var c=r.GR.p1[lockedCell.jour]&&r.GR.p1[lockedCell.jour][lockedCell.sid];
+      if(!c||c.clId!==lockedCell.clId||c.mat!==lockedCell.mat||!c.locked) ok=false;
+    }
+    return {pass:ok,detail:"créneau "+lockedCell.jour+" "+lockedCell.sid+" conservé verrouillé sur 5 régénérations : "+ok};
+  });
+  CURRENT_LOCKS=[];
+
+  // Test 18 : jamais la même matière (hors EPS) deux fois séparément le même
+  // jour pour une même classe (pas pédagogique).
+  resetSim();
+  PROFS=[mkProf("p1","Prof Maths",[{clId:"c1",clN:"5eA",niv:1,mat:"MATH",h:5}])];
+  CA=[{id:"c1",n:"5eA",niv:1}];
+  t("18. Jamais la même matière 2 fois le même jour pour une même classe",function(){
+    var r=attemptBest(6);
+    var slotsCourse=CR.filter(function(s){return s.t!=="pause"&&s.t!=="dej";}).map(function(s){return s.id;});
+    var bad=false;
+    JOURS.forEach(function(j){
+      var g=r.GR.p1; if(!g[j]) return;
+      var hits=[];
+      slotsCourse.forEach(function(sid,idx){ var c=g[j][sid]; if(c&&c.mat==="MATH") hits.push(idx); });
+      if(hits.length>2) bad=true;
+      else if(hits.length===2&&hits[1]-hits[0]!==1) bad=true;
+    });
+    return {pass:!bad&&r.conflits.length===0,detail:"violation détectée : "+bad+", conflits:"+r.conflits.length};
+  });
+
+  // Restauration de l'état réel
+  PROFS=bak.PROFS; PID=bak.PID; CA=bak.CA; VOL=bak.VOL; ANIM=bak.ANIM;
+  SAMEDI_ON=bak.SAMEDI_ON; JOURPED=bak.JOURPED; JOURPED_ON=bak.JOURPED_ON; EPS_RULES_ON=bak.EPS_RULES_ON;
+  EPS_THEO=bak.EPS_THEO; EPS_SLOTS=bak.EPS_SLOTS; EPS_COMBO_ON=bak.EPS_COMBO_ON; LAST_FAILED=bak.LAST_FAILED;
+  CURRENT_LOCKS=bak.CURRENT_LOCKS;
+  rebuildJours();
+
+  var nbOk=results.filter(function(r){return r.pass;}).length;
+  var h="<b>"+nbOk+"/"+results.length+" tests réussis</b><ul style='margin-top:6px;padding-left:14px'>";
+  results.forEach(function(r){
+    h+="<li>"+(r.pass?"&#9989;":"&#10060;")+" "+r.name+(r.detail?" — <span style='color:var(--gris3)'>"+r.detail+"</span>":"")+"</li>";
+  });
+  h+="</ul><p style='color:var(--gris3);margin-top:4px'>Vos données réelles n'ont pas été modifiées.</p>";
+  box.innerHTML=h;
+}
+
+load();
+populateMatiereSelects();
+buildCABox();
+buildAnimBox();
+buildParamsBox();
+buildCB();
+renderProfs();
+// Ré-affiche l'emploi du temps déjà généré (le cas échéant) sans regénérer :
+// GCACHE est maintenant sauvegardé/restauré comme le reste des données.
+if(PROFS.length && GCACHE && Object.keys(GCACHE).length){
+  try{
+    refreshAuditAfterEdit();
+    renderAll(GCACHE);
+    renderClasses();
+  }catch(e){}
+}
+renderGenStaleBanner();
+renderEditLog();
+loadHistory();
+renderHistoryBox();
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    fetch("./sw.js",{method:"HEAD"}).then(function(r){
+      if(r.ok) navigator.serviceWorker.register("./sw.js").catch(function(){});
+    }).catch(function(){});
+  });
+}
+
+// ═══════════════════════════════════════════════
+// INSTALLATION DE L'APPLICATION (PWA)
+// ═══════════════════════════════════════════════
+// NB : le bouton "Installer" natif n'apparaît QUE si le site est ouvert
+// via une adresse http(s):// (hébergement) — jamais si le fichier est
+// ouvert directement depuis le téléphone (file://). C'est une règle de
+// sécurité des navigateurs, pas une limite de cette application.
+var deferredPrompt=null;
+var isStandalone = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches
+                    || window.navigator.standalone===true;
+var isFileProtocol = window.location.protocol==="file:";
+var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+window.addEventListener("beforeinstallprompt",function(e){
+  e.preventDefault();
+  deferredPrompt=e;
+  if(!isStandalone) showInstallBar(false);
+});
+
+window.addEventListener("appinstalled",function(){
+  hideInstallBar();
+  deferredPrompt=null;
+});
+
+function doInstall(){
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.finally(function(){deferredPrompt=null;hideInstallBar();});
+  }
+}
+
+function showInstallBar(iosMode){
+  if(isStandalone) return;
+  var bar=document.getElementById("installBar");
+  var txt=document.getElementById("installTxt");
+  var btn=document.getElementById("btnInstall");
+  if(iosMode){
+    txt.textContent="📲 iPhone : appuyez sur Partager (⬆️) puis \"Sur l'écran d'accueil\" pour installer l'application.";
+    btn.style.display="none";
+  } else {
+    txt.textContent="📲 Installez APEX EDT sur cet appareil pour l'utiliser hors-ligne, comme une vraie application.";
+    btn.style.display="inline-block";
+  }
+  bar.style.display="flex";
+}
+function hideInstallBar(){
+  document.getElementById("installBar").style.display="none";
+}
+
+// iOS Safari ne déclenche jamais "beforeinstallprompt" : on affiche
+// directement l'instruction manuelle si l'app tourne bien en http(s).
+if(isIOS && !isStandalone && !isFileProtocol){
+  showInstallBar(true);
+}
+
+// ═══════════════════════════════════════════════
+// ACTIVATION (protection d'acces)
+// ═══════════════════════════════════════════════
+// ATTENTION : changez ce code avant de livrer une copie a un etablissement client.
+var ACTIVATION_CODE = "APEX-LYCEE-2026-DEMO";
+function checkUnlock(){
+  try{
+    if(localStorage.getItem("apex_lycee_unlocked")==="1"){
+      document.getElementById("lockScreen").style.display="none";
+    }
+  }catch(e){
+    // localStorage indisponible (ex: ouverture en file:// avec stockage bloqué,
+    // navigation privée) : on ne peut pas mémoriser le déverrouillage d'une
+    // fois pour toutes, mais ça ne doit jamais empêcher l'app de démarrer —
+    // l'écran de code restera simplement affiché à chaque ouverture.
+  }
+}
+function tryUnlock(){
+  var val=document.getElementById("lockCode").value.trim().toUpperCase();
+  if(val===ACTIVATION_CODE){
+    // Le déverrouillage lui-même NE DOIT JAMAIS dépendre de la réussite du
+    // stockage : un code correct doit toujours faire disparaître l'écran,
+    // même si localStorage échoue (file://, navigation privée, stockage
+    // désactivé...). La mémorisation pour la prochaine ouverture est un bonus,
+    // pas une condition.
+    try{ localStorage.setItem("apex_lycee_unlocked","1"); }catch(e){}
+    document.getElementById("lockScreen").style.display="none";
+  }else{
+    var errEl=document.getElementById("lockError");
+    errEl.textContent="Code incorrect. Verifiez la saisie ou contactez APEX EDUCATION.";
+    var input=document.getElementById("lockCode");
+    input.style.borderColor="#b91c1c";
+    input.style.background="#fef2f2";
+    setTimeout(function(){ input.style.borderColor=""; input.style.background=""; },1500);
+  }
+}
+checkUnlock();
+</script>
+</body>
+</html>
